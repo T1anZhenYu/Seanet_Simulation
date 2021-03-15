@@ -24,5 +24,5 @@ NS_LOG_COMPONENT_DEFINE ("DropTailQueue");
 
 NS_OBJECT_TEMPLATE_CLASS_DEFINE (DropTailQueue,Packet);
 NS_OBJECT_TEMPLATE_CLASS_DEFINE (DropTailQueue,QueueDiscItem);
-
+NS_OBJECT_TEMPLATE_CLASS_DEFINE (DropTailQueue,SeanetAddress);
 } // namespace ns3

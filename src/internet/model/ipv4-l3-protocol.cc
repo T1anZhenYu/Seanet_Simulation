@@ -571,11 +571,6 @@ Ipv4L3Protocol::Receive ( Ptr<NetDevice> device, Ptr<const Packet> p, uint16_t p
                           const Address &to, NetDevice::PacketType packetType)
 {
   NS_LOG_FUNCTION (this << device << p << protocol << from << to << packetType);
-
-  NS_LOG_LOGIC ("Packet from " << from << " received on node " << 
-                m_node->GetId ());
-
-
   int32_t interface = GetInterfaceForDevice(device);
   NS_ASSERT_MSG (interface != -1, "Received a packet from an interface that is not known to IPv4");
 
@@ -652,6 +647,10 @@ Ipv4L3Protocol::Receive ( Ptr<NetDevice> device, Ptr<const Packet> p, uint16_t p
       Ptr<Ipv4RawSocketImpl> socket = *i;
       socket->ForwardUp (packet, ipHeader, ipv4Interface);
     }
+  Ipv4Address ipv4_from = ipHeader.GetSource();
+  Ipv4Address ipv4_to = ipHeader.GetDestination();
+  InetSocketAddress i4a_to = InetSocketAddress (ipv4_to, 4000);
+  InetSocketAddress i4a_from = InetSocketAddress (ipv4_from, 4000);
 
   if (m_enableDpd && ipHeader.GetDestination ().IsMulticast () && UpdateDuplicate (packet, ipHeader))
     {
@@ -661,6 +660,8 @@ Ipv4L3Protocol::Receive ( Ptr<NetDevice> device, Ptr<const Packet> p, uint16_t p
     }
 
   NS_ASSERT_MSG (m_routingProtocol != 0, "Need a routing protocol object to process packets");
+  NS_LOG_INFO ("Packet from " << i4a_from.GetIpv4() << " received on node " << m_node->GetId ()
+    <<" to "<< i4a_to.GetIpv4());
   if (!m_routingProtocol->RouteInput (packet, ipHeader, device,
                                       MakeCallback (&Ipv4L3Protocol::IpForward, this),
                                       MakeCallback (&Ipv4L3Protocol::IpMulticastForward, this),
@@ -668,7 +669,7 @@ Ipv4L3Protocol::Receive ( Ptr<NetDevice> device, Ptr<const Packet> p, uint16_t p
                                       MakeCallback (&Ipv4L3Protocol::RouteInputError, this)
                                       ))
     {
-      NS_LOG_WARN ("No route found for forwarding packet.  Drop.");
+      NS_LOG_INFO ("No route found for forwarding packet.  Drop.");
       m_dropTrace (ipHeader, packet, DROP_NO_ROUTE, m_node->GetObject<Ipv4> (), interface);
     }
 }
@@ -1090,7 +1091,6 @@ Ipv4L3Protocol::LocalDeliver (Ptr<const Packet> packet, Ipv4Header const&ip, uin
   NS_LOG_FUNCTION (this << packet << &ip << iif);
   Ptr<Packet> p = packet->Copy (); // need to pass a non-const packet up
   Ipv4Header ipHeader = ip;
-
   if ( !ipHeader.IsLastFragment () || ipHeader.GetFragmentOffset () != 0 )
     {
       NS_LOG_LOGIC ("Received a fragment, processing " << *p );

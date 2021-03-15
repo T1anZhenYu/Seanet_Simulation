@@ -223,7 +223,9 @@ public:
    * The input address buffer is expected to be in host byte order format.
    */
   void Deserialize (TagBuffer buffer);
-
+  uint8_t m_type; //!< Type of the address
+  uint8_t m_len;  //!< Length of the address
+  uint8_t m_data[MAX_SIZE]; //!< The address value
 private:
   /**
    * \brief Equal to operator.
@@ -270,9 +272,7 @@ private:
    */
   friend std::istream& operator>> (std::istream& is, Address & address);
 
-  uint8_t m_type; //!< Type of the address
-  uint8_t m_len;  //!< Length of the address
-  uint8_t m_data[MAX_SIZE]; //!< The address value
+
 };
 
 ATTRIBUTE_HELPER_HEADER (Address);

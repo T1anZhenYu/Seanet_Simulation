@@ -28,7 +28,9 @@
 #include "ns3/loopback-net-device.h"
 
 #include "ipv4-nix-vector-routing.h"
-
+#include "ns3/ip-l4-protocol.h"
+#include "ns3/udp-header.h"
+#include "ns3/seanet-protocol.h"
 namespace ns3 {
 
 NS_LOG_COMPONENT_DEFINE ("Ipv4NixVectorRouting");
@@ -65,7 +67,7 @@ Ipv4NixVectorRouting::SetIpv4 (Ptr<Ipv4> ipv4)
 {
   NS_ASSERT (ipv4 != 0);
   NS_ASSERT (m_ipv4 == 0);
-  NS_LOG_DEBUG ("Created Ipv4NixVectorProtocol");
+  // NS_LOG_DEBUG ("Created Ipv4NixVectorProtocol");
 
   m_ipv4 = ipv4;
 }
@@ -542,7 +544,7 @@ Ipv4NixVectorRouting::RouteOutput (Ptr<Packet> p, const Ipv4Header &header, Ptr<
 
   CheckCacheStateAndFlush ();
 
-  NS_LOG_DEBUG ("Dest IP from header: " << header.GetDestination ());
+  // NS_LOG_DEBUG ("Dest IP from header: " << header.GetDestination ());
   // check if cache
   nixVectorInCache = GetNixVectorInCache (header.GetDestination ());
 
@@ -668,6 +670,15 @@ Ipv4NixVectorRouting::RouteInput (Ptr<const Packet> p, const Ipv4Header &header,
   // Check if input device supports IP
   NS_ASSERT (m_ipv4->GetInterfaceForDevice (idev) >= 0);
   uint32_t iif = m_ipv4->GetInterfaceForDevice (idev);
+  Ptr<IpL4Protocol> ilp= m_ipv4->GetProtocol(17);
+  bool isSeanet = false;
+  if(ilp->GetProtocolNumber()==17){
+    UdpHeader uh;
+    p->PeekHeader(uh);
+    if(uh.GetSourcePort()==4000){
+      isSeanet = true;
+    }
+  }
 
   // Local delivery
   if (m_ipv4->IsDestinationAddress (header.GetDestination (), iif))
@@ -685,6 +696,23 @@ Ipv4NixVectorRouting::RouteInput (Ptr<const Packet> p, const Ipv4Header &header,
           // multicast routing protocol can handle it.  It should be possible
           // to extend this to explicitly check whether it is a unicast
           // packet, and invoke the error callback if so
+          return false;
+        }
+    }else if(!m_ipv4->IsDestinationAddress (header.GetDestination (), iif) && isSeanet){
+      if(!lcb.IsNull()){
+        Ptr<Packet> packetCopy = p->Copy ();
+        UdpHeader uh;
+        packetCopy->RemoveHeader(uh);
+        uint8_t buf[MAX_PAYLOAD_LEN];
+        uint32_t len =  packetCopy->CopyData(buf,MAX_PAYLOAD_LEN);
+        buf[2] = NOT_DST;
+        Packet newp(buf,len);
+        Ptr<Packet> p_newp(&newp);
+        p_newp->AddHeader(uh);
+        lcb (p_newp, header, iif);
+      }
+      else
+        {
           return false;
         }
     }

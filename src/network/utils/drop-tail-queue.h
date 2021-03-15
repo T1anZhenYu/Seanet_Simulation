@@ -152,7 +152,7 @@ DropTailQueue<Item>::Peek (void) const
 // in drop-tail-queue.cc
 extern template class DropTailQueue<Packet>;
 extern template class DropTailQueue<QueueDiscItem>;
-
+extern template class DropTailQueue<SeanetAddress>;
 } // namespace ns3
 
 #endif /* DROPTAIL_H */

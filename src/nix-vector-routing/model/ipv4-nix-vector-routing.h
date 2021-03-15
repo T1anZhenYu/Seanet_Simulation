@@ -30,7 +30,7 @@
 #include "ns3/nix-vector.h"
 #include "ns3/bridge-net-device.h"
 #include "ns3/nstime.h"
-
+#include "ns3/seanet-header.h"
 #include <map>
 #include <unordered_map>
 

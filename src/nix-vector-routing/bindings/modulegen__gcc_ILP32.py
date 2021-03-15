@@ -198,6 +198,8 @@ def register_types(module):
     module.add_class('Header', import_from_module='ns.network', parent=root_module['ns3::Chunk'])
     ## ipv4-header.h (module 'internet'): ns3::Ipv4Header [class]
     module.add_class('Ipv4Header', import_from_module='ns.internet', parent=root_module['ns3::Header'])
+    ## seanet-header.h (module 'internet'): ns3::SeanetHeader [class]
+    module.add_class('SeanetHeader', import_from_module='ns.applications', parent=root_module['ns3::Header'])
     ## ipv4-header.h (module 'internet'): ns3::Ipv4Header::DscpType [enumeration]
     module.add_enum('DscpType', ['DscpDefault', 'DSCP_CS1', 'DSCP_AF11', 'DSCP_AF12', 'DSCP_AF13', 'DSCP_CS2', 'DSCP_AF21', 'DSCP_AF22', 'DSCP_AF23', 'DSCP_CS3', 'DSCP_AF31', 'DSCP_AF32', 'DSCP_AF33', 'DSCP_CS4', 'DSCP_AF41', 'DSCP_AF42', 'DSCP_AF43', 'DSCP_CS5', 'DSCP_EF', 'DSCP_CS6', 'DSCP_CS7'], outer_class=root_module['ns3::Ipv4Header'], import_from_module='ns.internet')
     ## ipv4-header.h (module 'internet'): ns3::Ipv4Header::EcnType [enumeration]
@@ -539,6 +541,7 @@ def register_methods(root_module):
     register_Ns3Chunk_methods(root_module, root_module['ns3::Chunk'])
     register_Ns3Header_methods(root_module, root_module['ns3::Header'])
     register_Ns3Ipv4Header_methods(root_module, root_module['ns3::Ipv4Header'])
+    register_Ns3SeanetHeader_methods(root_module, root_module['ns3::SeanetHeader'])
     register_Ns3Ipv4NixVectorHelper_methods(root_module, root_module['ns3::Ipv4NixVectorHelper'])
     register_Ns3Object_methods(root_module, root_module['ns3::Object'])
     register_Ns3ObjectAggregateIterator_methods(root_module, root_module['ns3::Object::AggregateIterator'])
@@ -3551,6 +3554,28 @@ def register_Ns3Ipv4Header_methods(root_module, cls):
     cls.add_method('SetTtl', 
                    'void', 
                    [param('uint8_t', 'ttl')])
+    return
+def register_Ns3SeanetHeader_methods(root_module, cls):
+    ## ipv4-header.h (module 'internet'): ns3::SeanetHeader::SeanetHeader(ns3::SeanetHeader const & arg0) [constructor]
+    cls.add_constructor([param('ns3::SeanetHeader const &', 'arg0')])
+    ## ipv4-header.h (module 'internet'): ns3::SeanetHeader::SeanetHeader(ns3::SeanetHeader const & arg0) [constructor]
+    cls.add_constructor([param('ns3::SeanetHeader const &', 'arg0'),param('uint8_t', 'at'),param('uint8_t', 'pt')])
+    cls.add_constructor([param('ns3::SeanetHeader const &', 'arg0'),param('uint8_t', 'at'),param('uint8_t', 'pt'),param('uint8_t', 'dst')])
+    ## ipv4-header.h (module 'internet'): ns3::SeanetHeader::SeanetHeader() [constructor]
+    cls.add_constructor([])
+    ## ipv4-header.h (module 'internet'): uint32_t ns3::SeanetHeader::Deserialize(ns3::Buffer::Iterator start) [member function]
+    cls.add_method('SetApplicationType', 
+                   [param('uint8_t', 'at')], 
+                   is_virtual=False)
+    cls.add_method('GetApplicationType', 
+                   'uint8_t',
+                   is_virtual=False,is_const=True)
+    cls.add_method('Setdst', 
+                   [param('uint8_t', 'at')], 
+                   is_virtual=False)
+    cls.add_method('GetApplicationType', 
+                    'uint8_t',
+                   is_virtual=False,is_const=True)
     return
 
 def register_Ns3Ipv4NixVectorHelper_methods(root_module, cls):

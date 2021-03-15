@@ -22,7 +22,7 @@
 
 #ifndef QUEUE_H
 #define QUEUE_H
-
+#include "ns3/seanet-address.h"
 #include "ns3/packet.h"
 #include "ns3/object.h"
 #include "ns3/traced-callback.h"
@@ -656,7 +656,7 @@ Queue<Item>::DropAfterDequeue (Ptr<Item> item)
 // NS_OBJECT_TEMPLATE_CLASS_DEFINE (Queue,QueueDiscItem), which are included in queue.cc
 extern template class Queue<Packet>;
 extern template class Queue<QueueDiscItem>;
-
+extern template class Queue<SeanetAddress>;
 } // namespace ns3
 
 #endif /* QUEUE_H */

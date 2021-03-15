@@ -742,12 +742,18 @@ def register_types(module):
     module.add_class('TypeIdValue', import_from_module='ns.core', parent=root_module['ns3::AttributeValue'])
     ## udp-client.h (module 'applications'): ns3::UdpClient [class]
     module.add_class('UdpClient', parent=root_module['ns3::Application'])
+    # ## my-udp-client.h (module 'applications'): ns3::StorageClientApplication [class]
+    module.add_class('StorageClientApplication', parent=root_module['ns3::Application'])
+    # ## my-udp-client.h (module 'applications'): ns3::ResolutionApplication [class]
+    module.add_class('ResolutionApplication', parent=root_module['ns3::Application'])
     ## udp-echo-client.h (module 'applications'): ns3::UdpEchoClient [class]
     module.add_class('UdpEchoClient', parent=root_module['ns3::Application'])
     ## udp-echo-server.h (module 'applications'): ns3::UdpEchoServer [class]
     module.add_class('UdpEchoServer', parent=root_module['ns3::Application'])
     ## udp-server.h (module 'applications'): ns3::UdpServer [class]
     module.add_class('UdpServer', parent=root_module['ns3::Application'])
+    ## udp-server.h (module 'applications'): ns3::SwitchApplication [class]
+    # module.add_class('SwitchApplication', parent=root_module['ns3::Application'])
     ## udp-trace-client.h (module 'applications'): ns3::UdpTraceClient [class]
     module.add_class('UdpTraceClient', parent=root_module['ns3::Application'])
     ## uinteger.h (module 'core'): ns3::UintegerValue [class]
@@ -810,6 +816,8 @@ def register_types(module):
     module.add_class('CounterCalculator', template_parameters=['unsigned int'], import_from_module='ns.stats', parent=root_module['ns3::DataCalculator'])
     ## drop-tail-queue.h (module 'network'): ns3::DropTailQueue<ns3::Packet> [class]
     module.add_class('DropTailQueue', template_parameters=['ns3::Packet'], import_from_module='ns.network', parent=root_module['ns3::Queue< ns3::Packet >'])
+    ## drop-tail-queue.h (module 'network'): ns3::DropTailQueue<ns3::SeanetAddress> [class]
+    module.add_class('DropTailQueue', template_parameters=['ns3::SeanetAddress'], import_from_module='ns.network', parent=root_module['ns3::Queue< ns3::SeanetAddress >'])
     ## drop-tail-queue.h (module 'network'): ns3::DropTailQueue<ns3::QueueDiscItem> [class]
     module.add_class('DropTailQueue', template_parameters=['ns3::QueueDiscItem'], import_from_module='ns.network', parent=root_module['ns3::Queue< ns3::QueueDiscItem >'])
     ## error-channel.h (module 'network'): ns3::ErrorChannel [class]
@@ -1234,9 +1242,12 @@ def register_methods(root_module):
     register_Ns3TypeIdChecker_methods(root_module, root_module['ns3::TypeIdChecker'])
     register_Ns3TypeIdValue_methods(root_module, root_module['ns3::TypeIdValue'])
     register_Ns3UdpClient_methods(root_module, root_module['ns3::UdpClient'])
+    register_Ns3UdpClient_methods(root_module, root_module['ns3::StorageClientApplication'])
+    register_Ns3UdpClient_methods(root_module, root_module['ns3::ResolutionApplication'])
     register_Ns3UdpEchoClient_methods(root_module, root_module['ns3::UdpEchoClient'])
     register_Ns3UdpEchoServer_methods(root_module, root_module['ns3::UdpEchoServer'])
     register_Ns3UdpServer_methods(root_module, root_module['ns3::UdpServer'])
+    register_Ns3UdpServer_methods(root_module, root_module['ns3::SwitchApplication'])
     register_Ns3UdpTraceClient_methods(root_module, root_module['ns3::UdpTraceClient'])
     register_Ns3UintegerValue_methods(root_module, root_module['ns3::UintegerValue'])
     register_Ns3AddressChecker_methods(root_module, root_module['ns3::AddressChecker'])
@@ -1268,6 +1279,7 @@ def register_methods(root_module):
     register_Ns3CallbackImpl__Void_Unsigned_int_Unsigned_int_Ns3Empty_Ns3Empty_Ns3Empty_Ns3Empty_Ns3Empty_Ns3Empty_Ns3Empty_methods(root_module, root_module['ns3::CallbackImpl< void, unsigned int, unsigned int, ns3::empty, ns3::empty, ns3::empty, ns3::empty, ns3::empty, ns3::empty, ns3::empty >'])
     register_Ns3CounterCalculator__Unsigned_int_methods(root_module, root_module['ns3::CounterCalculator< unsigned int >'])
     register_Ns3DropTailQueue__Ns3Packet_methods(root_module, root_module['ns3::DropTailQueue< ns3::Packet >'])
+    register_Ns3DropTailQueue__Ns3SeanetAddress_methods(root_module, root_module['ns3::DropTailQueue< ns3::SeanetAddress >'])
     register_Ns3DropTailQueue__Ns3QueueDiscItem_methods(root_module, root_module['ns3::DropTailQueue< ns3::QueueDiscItem >'])
     register_Ns3ErrorChannel_methods(root_module, root_module['ns3::ErrorChannel'])
     register_Ns3PacketCounterCalculator_methods(root_module, root_module['ns3::PacketCounterCalculator'])
@@ -5149,6 +5161,26 @@ def register_Ns3UdpServerHelper_methods(root_module, cls):
                    'void', 
                    [param('std::string', 'name'), param('ns3::AttributeValue const &', 'value')])
     return
+# def register_Ns3SwitchApplicationHelper_methods(root_module, cls):
+#     ## udp-client-server-helper.h (module 'applications'): ns3::UdpServerHelper::UdpServerHelper(ns3::UdpServerHelper const & arg0) [constructor]
+#     cls.add_constructor([param('ns3::UdpServerHelper const &', 'arg0')])
+#     ## udp-client-server-helper.h (module 'applications'): ns3::UdpServerHelper::UdpServerHelper() [constructor]
+#     cls.add_constructor([])
+#     ## udp-client-server-helper.h (module 'applications'): ns3::UdpServerHelper::UdpServerHelper(uint16_t port) [constructor]
+#     cls.add_constructor([param('uint16_t', 'port')])
+#     ## udp-client-server-helper.h (module 'applications'): ns3::Ptr<ns3::SwitchApplication> ns3::UdpServerHelper::GetServer() [member function]
+#     cls.add_method('GetServer', 
+#                    'ns3::Ptr< ns3::SwitchApplication >', 
+#                    [])
+#     ## udp-client-server-helper.h (module 'applications'): ns3::ApplicationContainer ns3::UdpServerHelper::Install(ns3::NodeContainer c) [member function]
+#     cls.add_method('Install', 
+#                    'ns3::ApplicationContainer', 
+#                    [param('ns3::NodeContainer', 'c')])
+#     ## udp-client-server-helper.h (module 'applications'): void ns3::UdpServerHelper::SetAttribute(std::string name, ns3::AttributeValue const & value) [member function]
+#     cls.add_method('SetAttribute', 
+#                    'void', 
+#                    [param('std::string', 'name'), param('ns3::AttributeValue const &', 'value')])
+#     return
 
 def register_Ns3UdpTraceClientHelper_methods(root_module, cls):
     ## udp-client-server-helper.h (module 'applications'): ns3::UdpTraceClientHelper::UdpTraceClientHelper(ns3::UdpTraceClientHelper const & arg0) [constructor]
@@ -11937,6 +11969,7 @@ def register_Ns3UdpClient_methods(root_module, cls):
                    visibility='private', is_virtual=True)
     return
 
+
 def register_Ns3UdpEchoClient_methods(root_module, cls):
     ## udp-echo-client.h (module 'applications'): ns3::UdpEchoClient::UdpEchoClient(ns3::UdpEchoClient const & arg0) [constructor]
     cls.add_constructor([param('ns3::UdpEchoClient const &', 'arg0')])
@@ -12065,6 +12098,51 @@ def register_Ns3UdpServer_methods(root_module, cls):
                    [], 
                    visibility='private', is_virtual=True)
     return
+# def register_Ns3SwitchApplication_methods(root_module, cls):
+#     ## udp-server.h (module 'applications'): ns3::SwitchApplication::SwitchApplication(ns3::SwitchApplication const & arg0) [constructor]
+#     cls.add_constructor([param('ns3::SwitchApplication const &', 'arg0')])
+#     ## udp-server.h (module 'applications'): ns3::SwitchApplication::SwitchApplication() [constructor]
+#     cls.add_constructor([])
+#     ## udp-server.h (module 'applications'): uint32_t ns3::SwitchApplication::GetLost() const [member function]
+#     cls.add_method('GetLost', 
+#                    'uint32_t', 
+#                    [], 
+#                    is_const=True)
+#     ## udp-server.h (module 'applications'): uint16_t ns3::SwitchApplication::GetPacketWindowSize() const [member function]
+#     cls.add_method('GetPacketWindowSize', 
+#                    'uint16_t', 
+#                    [], 
+#                    is_const=True)
+#     ## udp-server.h (module 'applications'): uint64_t ns3::SwitchApplication::GetReceived() const [member function]
+#     cls.add_method('GetReceived', 
+#                    'uint64_t', 
+#                    [], 
+#                    is_const=True)
+#     ## udp-server.h (module 'applications'): static ns3::TypeId ns3::SwitchApplication::GetTypeId() [member function]
+#     cls.add_method('GetTypeId', 
+#                    'ns3::TypeId', 
+#                    [], 
+#                    is_static=True)
+#     ## udp-server.h (module 'applications'): void ns3::SwitchApplication::SetPacketWindowSize(uint16_t size) [member function]
+#     cls.add_method('SetPacketWindowSize', 
+#                    'void', 
+#                    [param('uint16_t', 'size')])
+#     ## udp-server.h (module 'applications'): void ns3::SwitchApplication::DoDispose() [member function]
+#     cls.add_method('DoDispose', 
+#                    'void', 
+#                    [], 
+#                    visibility='protected', is_virtual=True)
+#     ## udp-server.h (module 'applications'): void ns3::SwitchApplication::StartApplication() [member function]
+#     cls.add_method('StartApplication', 
+#                    'void', 
+#                    [], 
+#                    visibility='private', is_virtual=True)
+#     ## udp-server.h (module 'applications'): void ns3::SwitchApplication::StopApplication() [member function]
+#     cls.add_method('StopApplication', 
+#                    'void', 
+#                    [], 
+#                    visibility='private', is_virtual=True)
+#     return
 
 def register_Ns3UdpTraceClient_methods(root_module, cls):
     ## udp-trace-client.h (module 'applications'): ns3::UdpTraceClient::UdpTraceClient(ns3::UdpTraceClient const & arg0) [constructor]
@@ -12870,6 +12948,38 @@ def register_Ns3DropTailQueue__Ns3QueueDiscItem_methods(root_module, cls):
                    is_virtual=True, is_const=True)
     ## drop-tail-queue.h (module 'network'): ns3::DropTailQueue<ns3::QueueDiscItem>::DropTailQueue(ns3::DropTailQueue<ns3::QueueDiscItem> const & arg0) [constructor]
     cls.add_constructor([param('ns3::DropTailQueue< ns3::QueueDiscItem > const &', 'arg0')])
+    return
+
+def register_Ns3DropTailQueue__Ns3SeanetAddress_methods(root_module, cls):
+    ## drop-tail-queue.h (module 'network'): static ns3::TypeId ns3::DropTailQueue<ns3::SeanetAddress>::GetTypeId() [member function]
+    cls.add_method('GetTypeId', 
+                   'ns3::TypeId', 
+                   [], 
+                   is_static=True)
+    ## drop-tail-queue.h (module 'network'): ns3::DropTailQueue<ns3::SeanetAddress>::DropTailQueue() [constructor]
+    cls.add_constructor([])
+    ## drop-tail-queue.h (module 'network'): bool ns3::DropTailQueue<ns3::SeanetAddress>::Enqueue(ns3::Ptr<ns3::SeanetAddress> item) [member function]
+    cls.add_method('Enqueue', 
+                   'bool', 
+                   [param('ns3::Ptr< ns3::SeanetAddress >', 'item')], 
+                   is_virtual=True)
+    ## drop-tail-queue.h (module 'network'): ns3::Ptr<ns3::SeanetAddress> ns3::DropTailQueue<ns3::SeanetAddress>::Dequeue() [member function]
+    cls.add_method('Dequeue', 
+                   'ns3::Ptr< ns3::SeanetAddress >', 
+                   [], 
+                   is_virtual=True)
+    ## drop-tail-queue.h (module 'network'): ns3::Ptr<ns3::SeanetAddress> ns3::DropTailQueue<ns3::SeanetAddress>::Remove() [member function]
+    cls.add_method('Remove', 
+                   'ns3::Ptr< ns3::SeanetAddress >', 
+                   [], 
+                   is_virtual=True)
+    ## drop-tail-queue.h (module 'network'): ns3::Ptr<const ns3::SeanetAddress> ns3::DropTailQueue<ns3::SeanetAddress>::Peek() const [member function]
+    cls.add_method('Peek', 
+                   'ns3::Ptr< ns3::SeanetAddress const >', 
+                   [], 
+                   is_virtual=True, is_const=True)
+    ## drop-tail-queue.h (module 'network'): ns3::DropTailQueue<ns3::SeanetAddress>::DropTailQueue(ns3::DropTailQueue<ns3::SeanetAddress> const & arg0) [constructor]
+    cls.add_constructor([param('ns3::DropTailQueue< ns3::SeanetAddress > const &', 'arg0')])
     return
 
 def register_Ns3ErrorChannel_methods(root_module, cls):

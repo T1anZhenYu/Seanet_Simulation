@@ -37,7 +37,7 @@ main (int argc, char *argv[])
   CommandLine cmd (__FILE__);
   cmd.Parse (argc, argv);
   
-  Time::SetResolution (Time::NS);
+  Time::SetResolution (Time::NS);//设置时间粒度
   LogComponentEnable ("UdpEchoClientApplication", LOG_LEVEL_INFO);
   LogComponentEnable ("UdpEchoServerApplication", LOG_LEVEL_INFO);
 
@@ -59,7 +59,7 @@ main (int argc, char *argv[])
 
   Ipv4InterfaceContainer interfaces = address.Assign (devices);
 
-  UdpEchoServerHelper echoServer (9);
+  UdpEchoServerHelper echoServer (9);//监听9端口
 
   ApplicationContainer serverApps = echoServer.Install (nodes.Get (1));
   serverApps.Start (Seconds (1.0));

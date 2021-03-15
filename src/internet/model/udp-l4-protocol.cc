@@ -39,7 +39,7 @@
 #include "ipv4-l3-protocol.h"
 #include "ipv6-l3-protocol.h"
 #include "udp-socket-impl.h"
-
+#include "ns3/seanet-protocol.h"
 namespace ns3 {
 
 NS_LOG_COMPONENT_DEFINE ("UdpL4Protocol");
@@ -325,7 +325,7 @@ UdpL4Protocol::Receive (Ptr<Packet> packet,
     {
       udpHeader.EnableChecksums ();
     }
-
+  // NS_LOG_INFO("UdpL4Protocol::Receive");
   udpHeader.InitializeChecksum (header.GetSource (), header.GetDestination (), PROT_NUMBER);
 
   // We only peek at the header for now (instead of removing it) so that it will be intact
@@ -367,6 +367,15 @@ UdpL4Protocol::Receive (Ptr<Packet> packet,
   for (Ipv4EndPointDemux::EndPointsI endPoint = endPoints.begin ();
        endPoint != endPoints.end (); endPoint++)
     {
+      if(udpHeader.GetDestinationPort()==4000){
+        uint8_t buf[MAX_PAYLOAD_LEN];
+
+        packet->CopyData(buf,MAX_PAYLOAD_LEN);
+        uint32_t iss = buf[2];
+        uint32_t app_num = buf[0];
+        uint32_t pro_num = buf[1];
+        NS_LOG_INFO("UdpL4Protocol::Receive iss "<<iss<<" pronum "<<pro_num<<" appnum "<<app_num);
+      }
       (*endPoint)->ForwardUp (packet->Copy (), header, udpHeader.GetSourcePort (), 
                               interface);
     }

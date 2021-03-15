@@ -4,6 +4,7 @@ def build(bld):
     network = bld.create_ns3_module('network', ['core', 'stats'])
     network.source = [
         'model/address.cc',
+        'model/seanet-address.cc',
         'model/application.cc',
         'model/buffer.cc',
         'model/byte-tag-list.cc',
@@ -27,6 +28,7 @@ def build(bld):
         'utils/crc32.cc',
         'utils/data-rate.cc',
         'utils/drop-tail-queue.cc',
+        'utils/seanet-eid.cc',
         'utils/dynamic-queue-limits.cc',
         'utils/error-channel.cc',
         'utils/error-model.cc',
@@ -98,6 +100,7 @@ def build(bld):
     headers.module = 'network'
     headers.source = [
         'model/address.h',
+        'model/seanet-address.h',
         'model/application.h',
         'model/buffer.h',
         'model/byte-tag-list.h',
@@ -121,6 +124,7 @@ def build(bld):
         'utils/crc32.h',
         'utils/data-rate.h',
         'utils/drop-tail-queue.h',
+        'utils/seanet-eid.h',
         'utils/dynamic-queue-limits.h',
         'utils/error-channel.h',
         'utils/error-model.h',

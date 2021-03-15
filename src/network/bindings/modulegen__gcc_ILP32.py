@@ -30,6 +30,8 @@ def register_types(module):
     module.add_enum('LogLevel', ['LOG_NONE', 'LOG_ERROR', 'LOG_LEVEL_ERROR', 'LOG_WARN', 'LOG_LEVEL_WARN', 'LOG_DEBUG', 'LOG_LEVEL_DEBUG', 'LOG_INFO', 'LOG_LEVEL_INFO', 'LOG_FUNCTION', 'LOG_LEVEL_FUNCTION', 'LOG_LOGIC', 'LOG_LEVEL_LOGIC', 'LOG_ALL', 'LOG_LEVEL_ALL', 'LOG_PREFIX_FUNC', 'LOG_PREFIX_TIME', 'LOG_PREFIX_NODE', 'LOG_PREFIX_LEVEL', 'LOG_PREFIX_ALL'], import_from_module='ns.core')
     ## address.h (module 'network'): ns3::Address [class]
     module.add_class('Address')
+    ## seanet-address.h (module 'Seanetnetwork'): ns3::Address [class]
+    module.add_class('SeanetAddress')
     ## address.h (module 'network'): ns3::Address::MaxSize_e [enumeration]
     module.add_enum('MaxSize_e', ['MAX_SIZE'], outer_class=root_module['ns3::Address'])
     ## application-container.h (module 'network'): ns3::ApplicationContainer [class]
@@ -720,6 +722,8 @@ def register_types(module):
     module.add_class('CounterCalculator', parent=root_module['ns3::DataCalculator'], import_from_module='ns.stats', template_parameters=['unsigned int'])
     ## drop-tail-queue.h (module 'network'): ns3::DropTailQueue<ns3::Packet> [class]
     module.add_class('DropTailQueue', parent=root_module['ns3::Queue< ns3::Packet >'], template_parameters=['ns3::Packet'])
+    ## drop-tail-queue.h (module 'network'): ns3::DropTailQueue<ns3::SeanetAddress> [class]
+    module.add_class('DropTailQueue', parent=root_module['ns3::Queue< ns3::SeanetAddress >'], template_parameters=['ns3::SeanetAddress'])
     ## drop-tail-queue.h (module 'network'): ns3::DropTailQueue<ns3::QueueDiscItem> [class]
     module.add_class('DropTailQueue', parent=root_module['ns3::Queue< ns3::QueueDiscItem >'], template_parameters=['ns3::QueueDiscItem'])
     ## error-channel.h (module 'network'): ns3::ErrorChannel [class]
@@ -1141,6 +1145,7 @@ def register_methods(root_module):
     register_Ns3CallbackImpl__Void_Unsigned_int_Unsigned_int_Ns3Empty_Ns3Empty_Ns3Empty_Ns3Empty_Ns3Empty_Ns3Empty_Ns3Empty_methods(root_module, root_module['ns3::CallbackImpl< void, unsigned int, unsigned int, ns3::empty, ns3::empty, ns3::empty, ns3::empty, ns3::empty, ns3::empty, ns3::empty >'])
     register_Ns3CounterCalculator__Unsigned_int_methods(root_module, root_module['ns3::CounterCalculator< unsigned int >'])
     register_Ns3DropTailQueue__Ns3Packet_methods(root_module, root_module['ns3::DropTailQueue< ns3::Packet >'])
+    register_Ns3DropTailQueue__Ns3SeanetAddress_methods(root_module, root_module['ns3::DropTailQueue< ns3::SeanetAddress >'])
     register_Ns3DropTailQueue__Ns3QueueDiscItem_methods(root_module, root_module['ns3::DropTailQueue< ns3::QueueDiscItem >'])
     register_Ns3ErrorChannel_methods(root_module, root_module['ns3::ErrorChannel'])
     register_Ns3PacketCounterCalculator_methods(root_module, root_module['ns3::PacketCounterCalculator'])
@@ -11375,6 +11380,38 @@ def register_Ns3DropTailQueue__Ns3Packet_methods(root_module, cls):
                    is_const=True, is_virtual=True)
     ## drop-tail-queue.h (module 'network'): ns3::DropTailQueue<ns3::Packet>::DropTailQueue(ns3::DropTailQueue<ns3::Packet> const & arg0) [constructor]
     cls.add_constructor([param('ns3::DropTailQueue< ns3::Packet > const &', 'arg0')])
+    return
+
+def register_Ns3DropTailQueue__Ns3SeanetAddress_methods(root_module, cls):
+    ## drop-tail-queue.h (module 'network'): static ns3::TypeId ns3::DropTailQueue<ns3::SeanetAddress>::GetTypeId() [member function]
+    cls.add_method('GetTypeId', 
+                   'ns3::TypeId', 
+                   [], 
+                   is_static=True)
+    ## drop-tail-queue.h (module 'network'): ns3::DropTailQueue<ns3::SeanetAddress>::DropTailQueue() [constructor]
+    cls.add_constructor([])
+    ## drop-tail-queue.h (module 'network'): bool ns3::DropTailQueue<ns3::SeanetAddress>::Enqueue(ns3::Ptr<ns3::SeanetAddress> item) [member function]
+    cls.add_method('Enqueue', 
+                   'bool', 
+                   [param('ns3::Ptr< ns3::SeanetAddress >', 'item')], 
+                   is_virtual=True)
+    ## drop-tail-queue.h (module 'network'): ns3::Ptr<ns3::SeanetAddress> ns3::DropTailQueue<ns3::SeanetAddress>::Dequeue() [member function]
+    cls.add_method('Dequeue', 
+                   'ns3::Ptr< ns3::SeanetAddress >', 
+                   [], 
+                   is_virtual=True)
+    ## drop-tail-queue.h (module 'network'): ns3::Ptr<ns3::SeanetAddress> ns3::DropTailQueue<ns3::SeanetAddress>::Remove() [member function]
+    cls.add_method('Remove', 
+                   'ns3::Ptr< ns3::SeanetAddress >', 
+                   [], 
+                   is_virtual=True)
+    ## drop-tail-queue.h (module 'network'): ns3::Ptr<const ns3::SeanetAddress> ns3::DropTailQueue<ns3::SeanetAddress>::Peek() const [member function]
+    cls.add_method('Peek', 
+                   'ns3::Ptr< ns3::SeanetAddress const >', 
+                   [], 
+                   is_const=True, is_virtual=True)
+    ## drop-tail-queue.h (module 'network'): ns3::DropTailQueue<ns3::SeanetAddress>::DropTailQueue(ns3::DropTailQueue<ns3::SeanetAddress> const & arg0) [constructor]
+    cls.add_constructor([param('ns3::DropTailQueue< ns3::SeanetAddress > const &', 'arg0')])
     return
 
 def register_Ns3DropTailQueue__Ns3QueueDiscItem_methods(root_module, cls):

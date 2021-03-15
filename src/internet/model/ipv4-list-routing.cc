@@ -23,7 +23,7 @@
 #include "ns3/node.h"
 #include "ns3/ipv4-static-routing.h"
 #include "ipv4-list-routing.h"
-
+#include "ns3/ip-l4-protocol.h"
 namespace ns3 {
 
 NS_LOG_COMPONENT_DEFINE ("Ipv4ListRouting");
@@ -138,7 +138,6 @@ Ipv4ListRouting::RouteInput (Ptr<const Packet> p, const Ipv4Header &header, Ptr<
   // Check if input device supports IP 
   NS_ASSERT (m_ipv4->GetInterfaceForDevice (idev) >= 0);
   uint32_t iif = m_ipv4->GetInterfaceForDevice (idev); 
-
   retVal = m_ipv4->IsDestinationAddress (header.GetDestination (), iif);
   if (retVal == true)
     {
