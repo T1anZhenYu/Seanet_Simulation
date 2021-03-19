@@ -195,6 +195,7 @@ Ptr<Packet>
 Socket::RecvFrom (Address &fromAddress)
 {
   NS_LOG_FUNCTION (this << &fromAddress);
+  NS_LOG_INFO("Socket::RecvFrom");
   return RecvFrom (std::numeric_limits<uint32_t>::max (), 0, fromAddress);
 }
 

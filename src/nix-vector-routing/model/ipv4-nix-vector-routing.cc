@@ -31,6 +31,7 @@
 #include "ns3/ip-l4-protocol.h"
 #include "ns3/udp-header.h"
 #include "ns3/seanet-protocol.h"
+#include "ns3/seanet-header_.h"
 namespace ns3 {
 
 NS_LOG_COMPONENT_DEFINE ("Ipv4NixVectorRouting");
@@ -672,6 +673,7 @@ Ipv4NixVectorRouting::RouteInput (Ptr<const Packet> p, const Ipv4Header &header,
   uint32_t iif = m_ipv4->GetInterfaceForDevice (idev);
   Ptr<IpL4Protocol> ilp= m_ipv4->GetProtocol(17);
   bool isSeanet = false;
+  // NS_LOG_INFO ("in route input " << header.GetDestination ()<<" <--  "<<header.GetSource());
   if(ilp->GetProtocolNumber()==17){
     UdpHeader uh;
     p->PeekHeader(uh);
@@ -679,15 +681,30 @@ Ipv4NixVectorRouting::RouteInput (Ptr<const Packet> p, const Ipv4Header &header,
       isSeanet = true;
     }
   }
-
   // Local delivery
-  if (m_ipv4->IsDestinationAddress (header.GetDestination (), iif))
+  if (isSeanet)
     {
+      // NS_LOG_INFO("in real local delivery");
       if (!lcb.IsNull ())
         {
-          NS_LOG_LOGIC ("Local delivery to " << header.GetDestination ());
-          lcb (p, header, iif);
-          return true;
+
+          Ptr<Packet> packetCopy = p->Copy ();
+          UdpHeader uh;
+          packetCopy->RemoveHeader(uh);
+          SeanetHeader_ sh;
+          packetCopy->RemoveHeader(sh);
+          if(m_ipv4->IsDestinationAddress (header.GetDestination (), iif)){
+            sh.Setdst(IS_DST);
+          }else{
+            sh.Setdst(NOT_DST);
+          }
+
+          packetCopy->AddHeader(sh);
+          packetCopy->AddHeader(uh);
+          lcb (packetCopy, header, iif);
+          if(m_ipv4->IsDestinationAddress (header.GetDestination (), iif)){
+            return true;
+          }
         }
       else
         {
@@ -698,24 +715,8 @@ Ipv4NixVectorRouting::RouteInput (Ptr<const Packet> p, const Ipv4Header &header,
           // packet, and invoke the error callback if so
           return false;
         }
-    }else if(!m_ipv4->IsDestinationAddress (header.GetDestination (), iif) && isSeanet){
-      if(!lcb.IsNull()){
-        Ptr<Packet> packetCopy = p->Copy ();
-        UdpHeader uh;
-        packetCopy->RemoveHeader(uh);
-        uint8_t buf[MAX_PAYLOAD_LEN];
-        uint32_t len =  packetCopy->CopyData(buf,MAX_PAYLOAD_LEN);
-        buf[2] = NOT_DST;
-        Packet newp(buf,len);
-        Ptr<Packet> p_newp(&newp);
-        p_newp->AddHeader(uh);
-        lcb (p_newp, header, iif);
-      }
-      else
-        {
-          return false;
-        }
     }
+
 
   Ptr<Ipv4Route> rtentry;
 

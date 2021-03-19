@@ -106,6 +106,7 @@ def build(bld):
     # bridge dependency is due to global routing
     obj = bld.create_ns3_module('internet', ['bridge', 'traffic-control', 'network', 'core'])
     obj.source = [
+        'model/seanet-header__.cc',
         'model/ip-l4-protocol.cc',
         'model/udp-header.cc',
         'model/tcp-header.cc',
@@ -320,6 +321,7 @@ def build(bld):
     headers = bld(features='ns3header')
     headers.module = 'internet'
     headers.source = [
+        'model/seanet-header__.h',
         'model/udp-header.h',
         'model/tcp-header.h',
         'model/tcp-option.h',

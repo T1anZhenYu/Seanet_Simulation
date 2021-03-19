@@ -37,6 +37,16 @@ SwitchApplicationHelperv4::SwitchApplicationHelperv4 (Address resolution_addr, u
   SetAttribute ("Port", UintegerValue (port));
 }
 
+//  SwitchApplicationHelperv4::SwitchApplicationHelperv4 (Address resolution_addr,uint16_t port,
+//   sgi::hash_map<Ipv4Address, float, Ipv4AddressHash> UnicastTable,
+//   sgi::hash_map<Ipv4Address, float, Ipv4AddressHash> MultiCastTable){
+//   m_factory.SetTypeId (SwitchApplicationv4::GetTypeId ());
+  
+//   SetAttribute ("Resolutionaddr", AddressValue (resolution_addr));
+//   SetAttribute ("Port", UintegerValue (port));
+//   SetAttribute ("UnicastTable", UintegerValue (port));
+// }
+
 void
 SwitchApplicationHelperv4::SetAttribute (std::string name, const AttributeValue &value)
 {
@@ -52,6 +62,22 @@ SwitchApplicationHelperv4::Install (NodeContainer c)
       Ptr<Node> node = *i;
 
       m_server = m_factory.Create<SwitchApplicationv4> ();
+      node->AddApplication (m_server);
+      apps.Add (m_server);
+
+    }
+  return apps;
+}
+ApplicationContainer SwitchApplicationHelperv4::Install (NodeContainer c,sgi::hash_map<Ipv4Address, float, Ipv4AddressHash>* sct,
+  sgi::hash_map<Ipv4Address, float, Ipv4AddressHash>* mct)
+{
+  ApplicationContainer apps;
+  for (NodeContainer::Iterator i = c.Begin (); i != c.End (); ++i)
+    {
+      Ptr<Node> node = *i;
+
+      m_server = m_factory.Create<SwitchApplicationv4> ();
+      m_server->SetNeighInfoTable(sct,mct);
       node->AddApplication (m_server);
       apps.Add (m_server);
 
@@ -185,5 +211,86 @@ StorageClientApplicationTraceHelperv4::Install (NodeContainer c)
     }
   return apps;
 }
+MulticastClientApplicationHelperv4::MulticastClientApplicationHelperv4 ()
+{
+  m_factory.SetTypeId (MulticastClientApplicationv4::GetTypeId ());
+}
 
+MulticastClientApplicationHelperv4::MulticastClientApplicationHelperv4 (Address switch_address, uint16_t switch_port,
+                                                                Address res_address, uint16_t res_port)
+{
+  m_factory.SetTypeId (MulticastClientApplicationv4::GetTypeId ());
+  SetAttribute ("SwitchAddress", AddressValue (switch_address));
+  SetAttribute ("SwitchPort", UintegerValue (switch_port));
+  SetAttribute ("ResAddress", AddressValue (res_address));
+  SetAttribute ("ResPort", UintegerValue (res_port));
+}
+
+MulticastClientApplicationHelperv4::MulticastClientApplicationHelperv4 (Address switch_address,Address res_address)
+{
+  m_factory.SetTypeId (MulticastClientApplicationv4::GetTypeId ());
+  SetAttribute ("SwitchAddress", AddressValue (switch_address));
+  SetAttribute ("ResAddress", AddressValue (res_address));
+}
+
+void
+MulticastClientApplicationHelperv4::SetAttribute (std::string name, const AttributeValue &value)
+{
+  m_factory.Set (name, value);
+}
+
+ApplicationContainer
+MulticastClientApplicationHelperv4::Install (NodeContainer c)
+{
+  ApplicationContainer apps;
+  for (NodeContainer::Iterator i = c.Begin (); i != c.End (); ++i)
+    {
+      Ptr<Node> node = *i;
+      Ptr<MulticastClientApplicationv4> client = m_factory.Create<MulticastClientApplicationv4> ();
+      node->AddApplication (client);
+      apps.Add (client);
+    }
+  return apps;
+}
+
+
+MulticastClientApplicationTraceHelperv4::MulticastClientApplicationTraceHelperv4 ()
+{
+  m_factory.SetTypeId (UdpTraceClient::GetTypeId ());
+}
+
+MulticastClientApplicationTraceHelperv4::MulticastClientApplicationTraceHelperv4 (Address address, uint16_t port, std::string filename)
+{
+  m_factory.SetTypeId (UdpTraceClient::GetTypeId ());
+  SetAttribute ("RemoteAddress", AddressValue (address));
+  SetAttribute ("RemotePort", UintegerValue (port));
+  SetAttribute ("TraceFilename", StringValue (filename));
+}
+
+MulticastClientApplicationTraceHelperv4::MulticastClientApplicationTraceHelperv4 (Address address, std::string filename)
+{
+  m_factory.SetTypeId (UdpTraceClient::GetTypeId ());
+  SetAttribute ("RemoteAddress", AddressValue (address));
+  SetAttribute ("TraceFilename", StringValue (filename));
+}
+
+void
+MulticastClientApplicationTraceHelperv4::SetAttribute (std::string name, const AttributeValue &value)
+{
+  m_factory.Set (name, value);
+}
+
+ApplicationContainer
+MulticastClientApplicationTraceHelperv4::Install (NodeContainer c)
+{
+  ApplicationContainer apps;
+  for (NodeContainer::Iterator i = c.Begin (); i != c.End (); ++i)
+    {
+      Ptr<Node> node = *i;
+      Ptr<UdpTraceClient> client = m_factory.Create<UdpTraceClient> ();
+      node->AddApplication (client);
+      apps.Add (client);
+    }
+  return apps;
+}
 } // namespace ns3

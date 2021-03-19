@@ -23,6 +23,7 @@
 #ifndef Resolution_App_V4_H
 #define Resolution_App_V4_H
 
+#include <list> 
 #include "ns3/application.h"
 #include "ns3/event-id.h"
 #include "ns3/ptr.h"
@@ -35,6 +36,7 @@
 #include "ns3/seanet-protocol.h"
 #include "ns3/seanet-header.h"
 #define EID_NA_TABLE_VALUE_SIZE 55 //first byte denotes the ip num. Only contain three ip address.
+
 namespace ns3 {
 /**
  * \ingroup applications
@@ -85,9 +87,9 @@ public:
    *  be a multiple of 8
    */
   void SetPacketWindowSize (uint16_t size);
-
-  uint8_t* LookupEIDNATable(SeanetEID se);
-  uint8_t* AddEIDNATable(SeanetEID se, Address to);
+  typedef std::list<uint8_t *> LISTIP;
+  LISTIP* LookupEIDNATable(SeanetEID se);
+  LISTIP* AddEIDNATable(SeanetEID se, Address to);
 protected:
   virtual void DoDispose (void);
 
@@ -124,9 +126,9 @@ private:
   void SendPacket(uint8_t* buffer, uint8_t buffer_len,SeanetHeader ssenh,Address to);
   Ptr<Queue<Packet> > packetin;//connet frontend and afterend.
   Ptr<Queue<SeanetAddress>> addressin;
-
-  typedef sgi::hash_map<SeanetEID, uint8_t *, SeanetEIDHash> EID_NA_table;// key is eid, value is ip list
-  typedef sgi::hash_map<SeanetEID, uint8_t *, SeanetEIDHash>::iterator EID_NA_table_i;
+  
+  typedef sgi::hash_map<SeanetEID, LISTIP*, SeanetEIDHash> EID_NA_table;// key is eid, value is ip list
+  typedef sgi::hash_map<SeanetEID, LISTIP*, SeanetEIDHash>::iterator EID_NA_table_i;
   EID_NA_table m_eid_na_table;
   uint16_t m_port; //!< Port on which we listen for incoming packets.
   Ptr<Socket> m_socket; //!< IPv4 Socket

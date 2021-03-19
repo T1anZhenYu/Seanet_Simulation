@@ -20,8 +20,8 @@
  *
  */
 
-#ifndef STORAGE_CLIENT_APP_V4_H
-#define STORAGE_CLIENT_APP_V4_H
+#ifndef MULTICAST_CLIENT_APP_V4_H
+#define MULTICAST_CLIENT_APP_V4_H
 
 #include "ns3/application.h"
 #include "ns3/event-id.h"
@@ -105,13 +105,14 @@ private:
   uint32_t m_count; //!< Maximum number of packets the application will send
   Time m_interval; //!< Packet inter-send time
   uint32_t m_size; //!< Size of the sent packet (including the SeqTsHeader)
-
+  std::string function_type;
   uint32_t m_sent; //!< Counter for sent packets
   Ptr<Socket> m_switch_socket,m_resolution_socket; //!< Socket
   Address m_switch_address, m_resolution_address, m_local_address; //!< Remote peer address
   uint16_t m_switch_port,m_resolution_port; //!< Remote peer port
   EventId m_sendEvent, m_readEvent; //!< Event to send the next packet
   NeighDelayTable m_neigh_delay_table;
+
 };
 
 } // namespace ns3

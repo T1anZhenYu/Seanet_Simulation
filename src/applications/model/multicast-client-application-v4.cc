@@ -30,6 +30,10 @@
 #include <cstdlib>
 #include <cstdio>
 #include "multicast-client-application-v4.h"
+#include <ns3/string.h>
+#include "ns3/ipv4.h"
+#include "ns3/inet-socket-address.h"
+#include "ns3/ipv4-interface-address.h"
 namespace ns3 {
 
 NS_LOG_COMPONENT_DEFINE ("MulticastClientApplicationv4");
@@ -75,6 +79,12 @@ MulticastClientApplicationv4::GetTypeId (void)
                    UintegerValue (1024),
                    MakeUintegerAccessor (&MulticastClientApplicationv4::m_size),
                    MakeUintegerChecker<uint32_t> (12,65507))
+    .AddAttribute ("FunctionType",
+                   "Read or Write or all",
+                   StringValue ("Read"),
+                   MakeStringAccessor (&MulticastClientApplicationv4::function_type),
+                   MakeStringChecker ())
+              
   ;
   return tid;
 }
@@ -84,6 +94,7 @@ MulticastClientApplicationv4::MulticastClientApplicationv4 ()
   NS_LOG_FUNCTION (this);
   m_sent = 0;
   m_switch_socket = 0;
+  function_type = "Read";
   m_sendEvent = EventId ();
   m_readEvent = EventId ();
 }
@@ -133,14 +144,37 @@ MulticastClientApplicationv4::StartApplication (void)
         }
       m_switch_socket->GetSockName (m_local_address);
     }
+  Ptr<Node> mynode = GetNode();
+  Ptr<Ipv4> ipv4 = m_node->GetObject<Ipv4> ();
+  for (uint32_t i = 0; i < ipv4->GetNInterfaces (); i++ )
+  {
+    // Get the primary address
+    Ipv4InterfaceAddress iaddr = ipv4->GetAddress (i, 0);
+    Ipv4Address addri = iaddr.GetLocal ();
+    if (addri == Ipv4Address ("127.0.0.1"))
+      continue;
+    m_local_address = Address(addri);
+    InetSocketAddress mlocal = InetSocketAddress (addri, m_switch_port);
+    NS_LOG_INFO("client local address "<<mlocal.GetIpv4());
+    break;
+  }
+
+
 
   m_switch_socket->SetRecvCallback (MakeCallback (&MulticastClientApplicationv4::ReceiveCallback, this));
   m_switch_socket->SetAllowBroadcast (true);
   // m_resolution_socket->SetRecvCallback (MakeNullCallback<void, Ptr<Socket> > ());
   // m_resolution_socket->SetAllowBroadcast (true);
-  m_sendEvent = Simulator::Schedule (Seconds (0.0), &MulticastClientApplicationv4::Write, this);
+  if(function_type=="Write"){
+    Simulator::Schedule (Seconds (0.0), &MulticastClientApplicationv4::Write, this);
+  }else if(function_type=="Read"){
+    Simulator::Schedule (Seconds (1.0), &MulticastClientApplicationv4::Read, this);
+  }else if(function_type=="All"){
+    Simulator::Schedule (Seconds (0.0), &MulticastClientApplicationv4::Write, this);
+    Simulator::Schedule (Seconds (1.0), &MulticastClientApplicationv4::Read, this);
+  }
 
-  NeighInfoDetec(m_switch_address,m_switch_port);
+  // NeighInfoDetec(m_switch_address,m_switch_port);
 }
 
 void
@@ -156,19 +190,17 @@ MulticastClientApplicationv4::Write (void)
 {
   NS_LOG_FUNCTION (this);
   NS_ASSERT (m_sendEvent.IsExpired ());
-  SeanetHeader ssenh(SWITCH_APPLICATION,RESEIVE_DATA,IS_DST);
+  SeanetHeader ssenh(MULTICAST_APPLICATION,REGIST_TO_SOURCE_DR);
   
   uint8_t buffer[30];
   memcpy(buffer,"33333333333333333333",21);
-  // NS_LOG_INFO("Storage client write");
+  NS_LOG_INFO("client write to DR");
   SendPacket(buffer,20,ssenh,m_switch_address,m_switch_port);
-
-
-  if (m_sent < m_count)
-    {
-      m_sendEvent = Simulator::Schedule (m_interval, &MulticastClientApplicationv4::Read, this);
-      m_sent++;
-    }
+  // if (m_sent < m_count)
+    // {
+      m_sendEvent = Simulator::Schedule (Seconds(2), &MulticastClientApplicationv4::Read, this);
+      // m_sent++;
+    // }
 }
 
 void
@@ -176,16 +208,16 @@ MulticastClientApplicationv4::Read (void)
 {
   NS_LOG_FUNCTION (this);
   NS_ASSERT (m_readEvent.IsExpired ());
-  SeanetHeader ssenh(RESOLUTION_APPLICATION ,REQUEST_DATA,IS_DST);
+  SeanetHeader ssenh(MULTICAST_APPLICATION ,REGIST_TO_DEST_DR);
   
   uint8_t buffer[30];
   memcpy(buffer,"33333333333333333333",21);
-  // NS_LOG_INFO("Storage client read");
-  SendPacket(buffer,20,ssenh,m_resolution_address,m_resolution_port);
-  if (m_sent < m_count)
-    {
-      m_readEvent = Simulator::Schedule (m_interval, &MulticastClientApplicationv4::Write, this);
-    }
+  NS_LOG_INFO("client send multicast request");
+  SendPacket(buffer,20,ssenh,m_switch_address,m_switch_port);
+  // if (m_sent < m_count)
+  //   {
+      // m_readEvent = Simulator::Schedule (m_interval, &MulticastClientApplicationv4::Write, this);
+    // }
 }
 void MulticastClientApplicationv4::ReceiveCallback (Ptr<Socket> socket){
   NS_LOG_FUNCTION (this << socket);
@@ -225,6 +257,18 @@ void MulticastClientApplicationv4::ReceiveCallback (Ptr<Socket> socket){
               int buffer_len = packet->CopyData(buffer,MAX_PAYLOAD_LEN);
               NeigthInfoProtocolHandle(buffer,buffer_len,protocol_type,from,stsh);
               break;
+            }
+            case MULTICAST_APPLICATION:{
+                uint8_t addr[20];
+                from.CopyTo(addr);
+                Ipv4Address ipv4 = Ipv4Address::Deserialize (addr);
+                InetSocketAddress i4a = InetSocketAddress (ipv4, m_switch_port);
+
+                m_local_address.CopyTo(addr);
+                Ipv4Address m_ipv4 = Ipv4Address::Deserialize (addr);
+                InetSocketAddress m_i4a = InetSocketAddress (m_ipv4, m_switch_port);
+
+                NS_LOG_INFO("client "<<m_i4a.GetIpv4()<<" receive multicast reply from address"<<i4a.GetIpv4());
             }
             default:
             break;
@@ -298,19 +342,20 @@ void MulticastClientApplicationv4::SwitchReplyHandle(uint8_t* buffer, uint8_t bu
 
 void MulticastClientApplicationv4::ResolutionReplyHandle(uint8_t* buffer, uint8_t buffer_len, Address from){
   SeanetEID se(buffer);
-  uint32_t ipnum = buffer[EIDSIZE];
+  uint32_t finished = buffer[EIDSIZE];
+  uint32_t ipnum = buffer[EIDSIZE+1];
   
   // se.Print();
-  if(ipnum >= 1){
-    Ipv4Address ipv4=Ipv4Address::Deserialize (buffer+EIDSIZE+1);
-    uint16_t port= buffer[EIDSIZE+17] | (buffer[EIDSIZE+18] << 8);
+  // if(ipnum >= 1){
+    Ipv4Address ipv4=Ipv4Address::Deserialize (buffer+EIDSIZE+2);
+    uint16_t port= buffer[EIDSIZE+18] | (buffer[EIDSIZE+19] << 8);
     InetSocketAddress i4a = InetSocketAddress (ipv4, port);
-    // NS_LOG_INFO("client receive resolution reply, ipnum "<<ipnum << " res address"<<i4a.GetIpv4());
-    SeanetHeader ssenh(SWITCH_APPLICATION,REQUEST_DATA,IS_DST);
-    uint8_t res[EIDSIZE];
-    se.getSeanetEID(res);
-    SendPacket(res,EIDSIZE,ssenh,i4a,m_switch_port);
-  }
+    NS_LOG_INFO("MulticastClient receive resolution reply, ipnum "<<ipnum<<" finish "<<finished << " res address"<<i4a.GetIpv4());
+    // SeanetHeader ssenh(SWITCH_APPLICATION,REQUEST_DATA,IS_DST);
+    // uint8_t res[EIDSIZE];
+    // se.getSeanetEID(res);
+    // SendPacket(res,EIDSIZE,ssenh,i4a,m_switch_port);
+  // }
 }
 
 void MulticastClientApplicationv4::SendPacket(uint8_t* buffer, uint8_t buffer_len,SeanetHeader ssenh,Address to, uint16_t port){

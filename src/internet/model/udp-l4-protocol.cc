@@ -40,6 +40,7 @@
 #include "ipv6-l3-protocol.h"
 #include "udp-socket-impl.h"
 #include "ns3/seanet-protocol.h"
+#include "ns3/seanet-header__.h"
 namespace ns3 {
 
 NS_LOG_COMPONENT_DEFINE ("UdpL4Protocol");
@@ -362,22 +363,52 @@ UdpL4Protocol::Receive (Ptr<Packet> packet,
       NS_LOG_LOGIC ("RX_ENDPOINT_UNREACH");
       return IpL4Protocol::RX_ENDPOINT_UNREACH;
     }
-
+  
   packet->RemoveHeader(udpHeader);
+
+  // int flag = 0;
+  // Ipv4Address dst = header.GetDestination();
+  // Ipv4Address src = header.GetSource();
+  // Ipv4Address i4a;
+
+  // uint8_t buf[MAX_PAYLOAD_LEN];
+  // int len = packet->CopyData(buf,MAX_PAYLOAD_LEN);
+  // packet->CopyData(buf,MAX_PAYLOAD_LEN);
   for (Ipv4EndPointDemux::EndPointsI endPoint = endPoints.begin ();
        endPoint != endPoints.end (); endPoint++)
     {
-      if(udpHeader.GetDestinationPort()==4000){
-        uint8_t buf[MAX_PAYLOAD_LEN];
+      // if(udpHeader.GetDestinationPort()==4000){
+        // SeanetHeader__ sh;
+        // packet->RemoveHeader(sh);
+        // for(int i = 0; i < interface->GetNAddresses();i++){
+        //   Ipv4InterfaceAddress i4ia = interface->GetAddress(i);
+        //   i4a = i4ia.GetLocal();
+        //   if (i4a == Ipv4Address ("127.0.0.1"))
+        //     continue;
+        //   if(i4a == dst){
+        //     flag = 1;
+        //     break;
+        //   }
+        // }
+        // if(flag == 1){
+        //   NS_LOG_INFO("shoud change isdst");
+        //   sh.Setdst(0x01);
+        // }else{
+        //   NS_LOG_INFO("shoud not change isdst");
+        //   sh.Setdst(0x00);
+        // }        
 
-        packet->CopyData(buf,MAX_PAYLOAD_LEN);
-        uint32_t iss = buf[2];
-        uint32_t app_num = buf[0];
-        uint32_t pro_num = buf[1];
-        NS_LOG_INFO("UdpL4Protocol::Receive iss "<<iss<<" pronum "<<pro_num<<" appnum "<<app_num);
-      }
-      (*endPoint)->ForwardUp (packet->Copy (), header, udpHeader.GetSourcePort (), 
+        // packet->AddHeader(sh);
+      //   NS_LOG_INFO("UdpL4Protocol local address "<< InetSocketAddress(i4a,4000).GetIpv4()<<" dst "
+      // <<InetSocketAddress(dst,4000).GetIpv4()<<" source "<<InetSocketAddress(src,4000).GetIpv4()
+      // <<" application type "<<(uint32_t)sh.GetApplicationType()<<" protocol type "<< (uint32_t)sh.GetProtocolType()<<" is dst "
+      // <<(uint32_t)sh.Getdst()<<" packet size "<<packet->GetSize());
+      // }
+      
+      // Packet newp(buf,MAX_PAYLOAD_LEN);
+      (*endPoint)->ForwardUp (packet->Copy(), header, udpHeader.GetSourcePort (), 
                               interface);
+
     }
   return IpL4Protocol::RX_OK;
 }

@@ -6,6 +6,7 @@ def build(bld):
     module.source = [
         'model/ipv4-nix-vector-routing.cc',
         'helper/ipv4-nix-vector-helper.cc',
+        'model/seanet-header_.cc'
         ]
 
     headers = bld(features='ns3header')
@@ -13,6 +14,7 @@ def build(bld):
     headers.source = [
         'model/ipv4-nix-vector-routing.h',
         'helper/ipv4-nix-vector-helper.h',
+        'model/seanet-header_.h'
         ]
 
     if bld.env['ENABLE_EXAMPLES']:

@@ -215,10 +215,10 @@ ResolutionApplicationv4::FrontEnd (Ptr<Socket> socket)
         }
     }
 }
-uint8_t* ResolutionApplicationv4::LookupEIDNATable(SeanetEID se){
+ResolutionApplicationv4::LISTIP* ResolutionApplicationv4::LookupEIDNATable(SeanetEID se){
   if (m_eid_na_table.find (se) != m_eid_na_table.end ())
     {
-      uint8_t* entry = m_eid_na_table[se];
+      ResolutionApplicationv4::LISTIP* entry = m_eid_na_table[se];
       // NS_LOG_LOGIC ("ResolutionApplicationv4 Found an entry: " << entry);
 
       return entry;
@@ -226,27 +226,25 @@ uint8_t* ResolutionApplicationv4::LookupEIDNATable(SeanetEID se){
   // NS_LOG_LOGIC ("ResolutionApplicationv4 Nothing found");
   return NULL;
 }
-uint8_t* ResolutionApplicationv4::AddEIDNATable(SeanetEID se, Address to){
-  uint8_t * buf = ResolutionApplicationv4::LookupEIDNATable(se);
-  if(buf == NULL){
-    buf = new uint8_t[EID_NA_TABLE_VALUE_SIZE];
-    memset(buf,0,EID_NA_TABLE_VALUE_SIZE);
-    to.CopyTo(buf+1);
-    buf[0] = 1;
-    m_eid_na_table[se] = buf;
+ResolutionApplicationv4::LISTIP* ResolutionApplicationv4::AddEIDNATable(SeanetEID se, Address to){
+  LISTIP* lh = ResolutionApplicationv4::LookupEIDNATable(se);
+  uint8_t* buf = new uint8_t[18];
+  to.CopyTo(buf);
+  Ipv4Address ipv4=Ipv4Address::Deserialize (buf);
+  // Ipv4Address ipv4 = Ipv4Address::ConvertFrom(to);
+  InetSocketAddress i4a = InetSocketAddress (ipv4, 4000);
+  NS_LOG_INFO("resolution add info "<<i4a.GetIpv4());
+  if(lh==NULL){
+    lh = new ResolutionApplicationv4::LISTIP;
+
+    lh->push_back(buf);
+    m_eid_na_table[se] = lh;
   }else{
- 
-    uint8_t ipaddress[18];
-    to.CopyTo(ipaddress);
-    uint8_t address_num = buf[0];
-    if(address_num<3){
-      memcpy(buf+1+18*address_num,ipaddress,18);
-      address_num++;
-      buf[0] = address_num;
-    }
-    m_eid_na_table[se] = buf;
+    // uint8_t* buf = new uint8_t[18];
+    // to.CopyTo(buf);
+    lh->push_back(buf);
   }
-  return buf;
+  return lh;
 }
 
 void ResolutionApplicationv4::ResolutionProtocolHandle(uint8_t* buffer, uint8_t buffer_len,uint8_t protocoal_type, Address from){
@@ -267,20 +265,48 @@ void ResolutionApplicationv4::ResolutionProtocolHandle(uint8_t* buffer, uint8_t 
 void ResolutionApplicationv4::RequestHandle(uint8_t* buffer, uint8_t buffer_len, Address from){
   SeanetEID se(buffer);
   
-  uint8_t * value = ResolutionApplicationv4::LookupEIDNATable(se);
+  ResolutionApplicationv4::LISTIP * value = ResolutionApplicationv4::LookupEIDNATable(se);
   
   if(value!=NULL){
-    NS_LOG_INFO("Resolution info request");
+    // NS_LOG_INFO("Resolution info request");
     uint8_t res[MAX_PAYLOAD_LEN];
     se.getSeanetEID(res);
-    memcpy(res+EIDSIZE,value,EID_NA_TABLE_VALUE_SIZE);
-    SeanetHeader ssenh(RESOLUTION_APPLICATION,REPLY_EID_NA);
-    ResolutionApplicationv4::SendPacket(res,MAX_PAYLOAD_LEN,ssenh,from);
+    int ipnum = 0;
+    for (ResolutionApplicationv4::LISTIP::iterator it = value->begin(); it != value->end(); ++it) {
+      uint8_t* buf = *it;
+      std::list<uint8_t*>::iterator itnext = it;
+      itnext++;
+      memcpy(res+EIDSIZE+2+18*(ipnum%10),buf,18);
+      ipnum++;
+      if(ipnum%10==0 && itnext!=value->end()){
+        res[EIDSIZE]=PACKET_NOT_FINISH;//
+        res[EIDSIZE+1] = 10;
+        SeanetHeader ssenh(RESOLUTION_APPLICATION,REPLY_EID_NA);
+        ResolutionApplicationv4::SendPacket(res,MAX_PAYLOAD_LEN,ssenh,from); 
+        memset(res+EIDSIZE,0,MAX_PAYLOAD_LEN-EIDSIZE);    
+      }else if(ipnum%10==0 && itnext==value->end()){
+        res[EIDSIZE]=PACKET_FINISH;//
+        res[EIDSIZE+1] = 10;
+        SeanetHeader ssenh(RESOLUTION_APPLICATION,REPLY_EID_NA);
+        ResolutionApplicationv4::SendPacket(res,MAX_PAYLOAD_LEN,ssenh,from);  
+        memset(res+EIDSIZE,0,MAX_PAYLOAD_LEN-EIDSIZE);    
+      }
+      
+        // std::cout << *it << " ";
+    }
+    if(ipnum%10!=0){
+      res[EIDSIZE]=PACKET_FINISH;//
+      res[EIDSIZE+1] = ipnum%10;
+      // memcpy(res+EIDSIZE,value,EID_NA_TABLE_VALUE_SIZE);
+      SeanetHeader ssenh(RESOLUTION_APPLICATION,REPLY_EID_NA);
+      ResolutionApplicationv4::SendPacket(res,MAX_PAYLOAD_LEN,ssenh,from);
+    }
+
   }
 }
 
 void ResolutionApplicationv4::RegistHandle(uint8_t* buffer, uint8_t buffer_len, Address from){
-  NS_LOG_INFO("Resolution info regist");
+  // NS_LOG_INFO("Resolution info regist");
   SeanetEID se(buffer);
   ResolutionApplicationv4::AddEIDNATable(se,from);
 }

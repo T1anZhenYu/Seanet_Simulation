@@ -50,6 +50,8 @@ namespace ns3 {
  * stamp in their payloads. The application uses the sequence number
  * to determine if a packet is lost, and the time stamp to compute the delay.
  */
+// typedef sgi::hash_map<Ipv4Address, float, Ipv4AddressHash> NeighInfoTable;
+  
 class SwitchApplicationv4 : public Application
 {
 public:
@@ -77,7 +79,8 @@ public:
    * \return the size of the window used for checking loss.
    */
   uint16_t GetPacketWindowSize () const;
-
+  void SetNeighInfoTable(sgi::hash_map<Ipv4Address, float, Ipv4AddressHash>* sct,
+  sgi::hash_map<Ipv4Address, float, Ipv4AddressHash>* mct);
   /**
    * \brief Set the size of the window used for checking loss. This value should
    *  be a multiple of 8
@@ -86,17 +89,21 @@ public:
    */
   void SetPacketWindowSize (uint16_t size);
 
-  uint8_t LookupEIDNATable(SeanetEID se);
-  uint8_t AddEIDNATable(SeanetEID se, uint8_t value);
+  uint8_t LookupEIDTable(SeanetEID se);
+  uint8_t AddEIDTable(SeanetEID se, uint8_t value);
 
   void RandomCache(uint16_t size);
   void NeigthInfoProtocolHandle(uint8_t* buffer, uint8_t buffer_len, 
-                            uint8_t protocoal_type, Address from,SeqTsSizeHeader stsh);
+        uint8_t protocoal_type, Address from,SeqTsSizeHeader stsh);
+  void DetecAllNeighborDelay();
+  void SendPacket(uint8_t* buffer, uint8_t buffer_len,SeanetHeader ssenh,Address to);
+  void SendPacket(uint8_t* buffer, uint8_t buffer_len,SeanetHeader ssenh,SeqTsSizeHeader stsh,Address to, uint16_t port);
 protected:
   virtual void DoDispose (void);
 
 private:
-
+  
+  Ipv4Address GetRootNode();
   virtual void StartApplication (void);
   virtual void StopApplication (void);
   //Handle packet with switch protocol
@@ -105,9 +112,11 @@ private:
   void RequestDataHandle(uint8_t* buffer, uint8_t buffer_len, Address from);
   //handle data receive from other nodes
   void ReceiveDataHandle(uint8_t* buffer, uint8_t buffer_len, Address from);
+  void NeighInfoDetec(Address dst_ip,uint16_t dst_port);
+  int IsDestination(Address address);
+  void ResolutionProtocolHandle(uint8_t* buffer, uint8_t buffer_len, uint8_t protocoal_type, Address from);
   //Send packet 
-  void SendPacket(uint8_t* buffer, uint8_t buffer_len,SeanetHeader ssenh,Address to);
-  void SendPacket(uint8_t* buffer, uint8_t buffer_len,SeanetHeader ssenh,SeqTsSizeHeader stsh,Address to, uint16_t port);
+
   /**
    * \brief Handle frontend issue.
    *
@@ -125,7 +134,9 @@ private:
    * \param socket the socket the packet was received to.
    */
   void AferEnd ();
-  typedef sgi::hash_map<SeanetEID, uint8_t, SeanetEIDHash> EID_table; //key is eid, value is useless
+  
+  typedef sgi::hash_map<SeanetEID, uint8_t, SeanetEIDHash> EID_table; //the eid this switch stores.
+  typedef sgi::hash_map<SeanetEID, Ipv4Address, SeanetEIDHash> EID_NA_table; //the nearest switch which stores the eid
   Ptr<Queue<Packet> > packetin;//connet frontend and afterend.
   Ptr<Queue<SeanetAddress>> addressin;
   uint16_t m_port; //!< Port on which we listen for incoming packets.
@@ -136,8 +147,10 @@ private:
   PacketLossCounter m_lossCounter; //!< Lost packet counter
   EventId m_AfterEndEvent,m_RandomCacheEvent;
   EID_table m_eid_table;
+  EID_NA_table m_eid_na_table;
+  sgi::hash_map<Ipv4Address, Time, Ipv4AddressHash> DelayTable;
   Address resolution_addr,localAddress;
-
+  sgi::hash_map<Ipv4Address, float, Ipv4AddressHash> *UnicastTable, *MultiCastTable;
   /// Callbacks for tracing the packet Rx events
   TracedCallback<Ptr<const Packet> > m_rxTrace;
 

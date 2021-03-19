@@ -851,9 +851,10 @@ UdpSocketImpl::RecvFrom (uint32_t maxSize, uint32_t flags,
     }
   Ptr<Packet> p = m_deliveryQueue.front ().first;
   fromAddress = m_deliveryQueue.front ().second;
-
+  
   if (p->GetSize () <= maxSize)
     {
+      NS_LOG_INFO("POPING");
       m_deliveryQueue.pop ();
       m_rxAvailable -= p->GetSize ();
     }
@@ -1000,12 +1001,12 @@ UdpSocketImpl::ForwardUp (Ptr<Packet> packet, Ipv4Header header, uint16_t port,
                           Ptr<Ipv4Interface> incomingInterface)
 {
   NS_LOG_FUNCTION (this << packet << header << port);
-
+  
   if (m_shutdownRecv)
     {
       return;
     }
-
+  
   // Should check via getsockopt ()..
   if (IsRecvPktInfo ())
     {
@@ -1037,6 +1038,8 @@ UdpSocketImpl::ForwardUp (Ptr<Packet> packet, Ipv4Header header, uint16_t port,
   if ((m_rxAvailable + packet->GetSize ()) <= m_rcvBufSize)
     {
       Address address = InetSocketAddress (header.GetSource (), port);
+      NS_LOG_INFO("In UdpSocketImpl::ForwardUp src"<<InetSocketAddress (header.GetSource (), port).GetIpv4()<<
+      " dst "<<InetSocketAddress (header.GetDestination (), port).GetIpv4());
       m_deliveryQueue.push (std::make_pair (packet, address));
       m_rxAvailable += packet->GetSize ();
       NotifyDataRecv ();
@@ -1048,7 +1051,7 @@ UdpSocketImpl::ForwardUp (Ptr<Packet> packet, Ipv4Header header, uint16_t port,
       // in comparison to the arrival rate
       //
       // drop and trace packet
-      NS_LOG_WARN ("No receive buffer space available.  Drop.");
+      NS_LOG_INFO ("No receive buffer space available.  Drop.");
       m_dropTrace (packet);
     }
 }
