@@ -73,6 +73,8 @@ public:
 
   void Setdst (uint8_t at);
   uint8_t Getdst(void) const;
+  void SetInterface(uint8_t num);
+  uint8_t GetInterface();
   virtual TypeId GetInstanceTypeId (void) const;
   virtual void Print (std::ostream &os) const;
   virtual uint32_t GetSerializedSize (void) const;
@@ -83,6 +85,7 @@ private:
   uint8_t application_type; //!< eid num
   uint8_t protocol_type; //!< eid flag
   uint8_t is_dst;
+  uint8_t interface_num;
 };
 
 } // namespace ns3

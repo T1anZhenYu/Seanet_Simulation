@@ -671,6 +671,7 @@ Ipv4NixVectorRouting::RouteInput (Ptr<const Packet> p, const Ipv4Header &header,
   // Check if input device supports IP
   NS_ASSERT (m_ipv4->GetInterfaceForDevice (idev) >= 0);
   uint32_t iif = m_ipv4->GetInterfaceForDevice (idev);
+
   Ptr<IpL4Protocol> ilp= m_ipv4->GetProtocol(17);
   bool isSeanet = false;
   // NS_LOG_INFO ("in route input " << header.GetDestination ()<<" <--  "<<header.GetSource());
@@ -681,47 +682,92 @@ Ipv4NixVectorRouting::RouteInput (Ptr<const Packet> p, const Ipv4Header &header,
       isSeanet = true;
     }
   }
-  // Local delivery
-  if (isSeanet)
-    {
-      // NS_LOG_INFO("in real local delivery");
-      if (!lcb.IsNull ())
-        {
-
+   if (m_ipv4->IsDestinationAddress (header.GetDestination (), iif))
+     {
+       if (!lcb.IsNull ())
+         {
+          NS_LOG_LOGIC ("Local delivery to " << header.GetDestination ());
           Ptr<Packet> packetCopy = p->Copy ();
           UdpHeader uh;
           packetCopy->RemoveHeader(uh);
           SeanetHeader_ sh;
           packetCopy->RemoveHeader(sh);
-          if(m_ipv4->IsDestinationAddress (header.GetDestination (), iif)){
-            sh.Setdst(IS_DST);
-          }else{
-            sh.Setdst(NOT_DST);
-          }
-
+          sh.Setdst(IS_DST);
+          sh.SetInterface(iif);
           packetCopy->AddHeader(sh);
           packetCopy->AddHeader(uh);
           lcb (packetCopy, header, iif);
-          if(m_ipv4->IsDestinationAddress (header.GetDestination (), iif)){
-            return true;
-          }
-        }
-      else
-        {
-          // The local delivery callback is null.  This may be a multicast
-          // or broadcast packet, so return false so that another
-          // multicast routing protocol can handle it.  It should be possible
-          // to extend this to explicitly check whether it is a unicast
-          // packet, and invoke the error callback if so
-          return false;
-        }
-    }
+          return true;
+         }
+       else
+         {
+           // The local delivery callback is null.  This may be a multicast
+           // or broadcast packet, so return false so that another
+           // multicast routing protocol can handle it.  It should be possible
+           // to extend this to explicitly check whether it is a unicast
+           // packet, and invoke the error callback if so
+           return false;
+         }
+     }else if(isSeanet){
+       NS_LOG_INFO("isSeanet");
+        Ptr<Packet> packetCopy = p->Copy ();
+        UdpHeader uh;
+        packetCopy->RemoveHeader(uh);
+        SeanetHeader_ sh;
+        packetCopy->RemoveHeader(sh);
+        sh.Setdst(NOT_DST);
+        sh.SetInterface(iif);
+        packetCopy->AddHeader(sh);
+        packetCopy->AddHeader(uh);
+        lcb (packetCopy, header, iif);
+     }
 
 
   Ptr<Ipv4Route> rtentry;
 
   // Get the nix-vector from the packet
   Ptr<NixVector> nixVector = p->GetNixVector ();
+  // Local delivery
+  // if (isSeanet)
+  //   {
+  //     // NS_LOG_INFO("in real local delivery");
+  //     if (!lcb.IsNull ())
+  //       {
+
+  //         Ptr<Packet> packetCopy = p->Copy ();
+  //         UdpHeader uh;
+          
+  //         packetCopy->RemoveHeader(uh);
+  //         SeanetHeader_ sh;
+  //         packetCopy->RemoveHeader(sh);
+  //         if(m_ipv4->IsDestinationAddress (header.GetDestination (), iif)){
+  //           sh.Setdst(IS_DST);
+  //           sh.SetInterface(iif);
+  //         }else{
+  //           sh.Setdst(NOT_DST);
+  //           sh.SetInterface(iif);
+  //         }
+
+  //         packetCopy->AddHeader(sh);
+  //         packetCopy->AddHeader(uh);
+  //         lcb (packetCopy, header, iif);
+  //         if(m_ipv4->IsDestinationAddress (header.GetDestination (), iif)){
+  //           return true;
+  //         }
+  //       }
+  //     else
+  //       {
+  //         // The local delivery callback is null.  This may be a multicast
+  //         // or broadcast packet, so return false so that another
+  //         // multicast routing protocol can handle it.  It should be possible
+  //         // to extend this to explicitly check whether it is a unicast
+  //         // packet, and invoke the error callback if so
+  //         return false;
+  //       }
+  //   }
+
+
+
 
   // If nixVector isn't in packet, something went wrong
   NS_ASSERT (nixVector);

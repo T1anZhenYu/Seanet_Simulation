@@ -68,8 +68,9 @@ SwitchApplicationHelperv4::Install (NodeContainer c)
     }
   return apps;
 }
-ApplicationContainer SwitchApplicationHelperv4::Install (NodeContainer c,sgi::hash_map<Ipv4Address, float, Ipv4AddressHash>* sct,
-  sgi::hash_map<Ipv4Address, float, Ipv4AddressHash>* mct)
+ApplicationContainer SwitchApplicationHelperv4::Install (NodeContainer c,sgi::hash_map<Ipv4Address, std::list<uint8_t *>*, Ipv4AddressHash>* sct,
+  sgi::hash_map<Ipv4Address, std::list<uint8_t *>*, Ipv4AddressHash>* mct, 
+  sgi::hash_map<SeanetEID, std::list<Ipv4Address*>*, SeanetEIDHash>*ent,bool isEntry)
 {
   ApplicationContainer apps;
   for (NodeContainer::Iterator i = c.Begin (); i != c.End (); ++i)
@@ -77,7 +78,8 @@ ApplicationContainer SwitchApplicationHelperv4::Install (NodeContainer c,sgi::ha
       Ptr<Node> node = *i;
 
       m_server = m_factory.Create<SwitchApplicationv4> ();
-      m_server->SetNeighInfoTable(sct,mct);
+      m_server->SetNeighInfoTable(sct,mct,ent);
+      m_server->SetEntrySwitch(isEntry);
       node->AddApplication (m_server);
       apps.Add (m_server);
 

@@ -566,113 +566,112 @@ Ipv4L3Protocol::IsDestinationAddress (Ipv4Address address, uint32_t iif) const
   return false;
 }
 
-void 
-Ipv4L3Protocol::Receive ( Ptr<NetDevice> device, Ptr<const Packet> p, uint16_t protocol, const Address &from,
-                          const Address &to, NetDevice::PacketType packetType)
-{
-  NS_LOG_FUNCTION (this << device << p << protocol << from << to << packetType);
-  int32_t interface = GetInterfaceForDevice(device);
-  NS_ASSERT_MSG (interface != -1, "Received a packet from an interface that is not known to IPv4");
-
-  Ptr<Packet> packet = p->Copy ();
-
-  Ptr<Ipv4Interface> ipv4Interface = m_interfaces[interface];
-
-  if (ipv4Interface->IsUp ())
-    {
-      m_rxTrace (packet, m_node->GetObject<Ipv4> (), interface);
-    }
-  else
-    {
-      NS_LOG_LOGIC ("Dropping received packet -- interface is down");
-      Ipv4Header ipHeader;
-      packet->RemoveHeader (ipHeader);
-      m_dropTrace (ipHeader, packet, DROP_INTERFACE_DOWN, m_node->GetObject<Ipv4> (), interface);
-      return;
-    }
-
-  Ipv4Header ipHeader;
-  if (Node::ChecksumEnabled ())
-    {
-      ipHeader.EnableChecksum ();
-    }
-  packet->RemoveHeader (ipHeader);
-
-  // Trim any residual frame padding from underlying devices
-  if (ipHeader.GetPayloadSize () < packet->GetSize ())
-    {
-      packet->RemoveAtEnd (packet->GetSize () - ipHeader.GetPayloadSize ());
-    }
-
-  if (!ipHeader.IsChecksumOk ()) 
-    {
-      NS_LOG_LOGIC ("Dropping received packet -- checksum not ok");
-      m_dropTrace (ipHeader, packet, DROP_BAD_CHECKSUM, m_node->GetObject<Ipv4> (), interface);
-      return;
-    }
-
-  // the packet is valid, we update the ARP cache entry (if present)
-  Ptr<ArpCache> arpCache = ipv4Interface->GetArpCache ();
-  if (arpCache)
-    {
-      // case one, it's a a direct routing.
-      ArpCache::Entry *entry = arpCache->Lookup (ipHeader.GetSource ());
-      if (entry)
-        {
-          if (entry->IsAlive ())
-            {
-              entry->UpdateSeen ();
-            }
-        }
-      else
-        {
-          // It's not in the direct routing, so it's the router, and it could have multiple IP addresses.
-          // In doubt, update all of them.
-          // Note: it's a confirmed behavior for Linux routers.
-          std::list<ArpCache::Entry *> entryList = arpCache->LookupInverse (from);
-          std::list<ArpCache::Entry *>::iterator iter;
-          for (iter = entryList.begin (); iter != entryList.end (); iter ++)
-            {
-              if ((*iter)->IsAlive ())
-                {
-                  (*iter)->UpdateSeen ();
-                }
-            }
-        }
-    }
-
-  for (SocketList::iterator i = m_sockets.begin (); i != m_sockets.end (); ++i)
-    {
-      NS_LOG_LOGIC ("Forwarding to raw socket"); 
-      Ptr<Ipv4RawSocketImpl> socket = *i;
-      socket->ForwardUp (packet, ipHeader, ipv4Interface);
-    }
-  Ipv4Address ipv4_from = ipHeader.GetSource();
-  Ipv4Address ipv4_to = ipHeader.GetDestination();
-  InetSocketAddress i4a_to = InetSocketAddress (ipv4_to, 4000);
-  InetSocketAddress i4a_from = InetSocketAddress (ipv4_from, 4000);
-
-  if (m_enableDpd && ipHeader.GetDestination ().IsMulticast () && UpdateDuplicate (packet, ipHeader))
-    {
-      NS_LOG_LOGIC ("Dropping received packet -- duplicate.");
-      m_dropTrace (ipHeader, packet, DROP_DUPLICATE, m_node->GetObject<Ipv4> (), interface);
-      return;
-    }
-
-  NS_ASSERT_MSG (m_routingProtocol != 0, "Need a routing protocol object to process packets");
-  NS_LOG_INFO ("Packet from " << i4a_from.GetIpv4() << " received on node " << m_node->GetId ()
-    <<" to "<< i4a_to.GetIpv4());
-  if (!m_routingProtocol->RouteInput (packet, ipHeader, device,
-                                      MakeCallback (&Ipv4L3Protocol::IpForward, this),
-                                      MakeCallback (&Ipv4L3Protocol::IpMulticastForward, this),
-                                      MakeCallback (&Ipv4L3Protocol::LocalDeliver, this),
-                                      MakeCallback (&Ipv4L3Protocol::RouteInputError, this)
-                                      ))
-    {
-      NS_LOG_INFO ("No route found for forwarding packet.  Drop.");
-      m_dropTrace (ipHeader, packet, DROP_NO_ROUTE, m_node->GetObject<Ipv4> (), interface);
-    }
-}
+ void 
+ Ipv4L3Protocol::Receive ( Ptr<NetDevice> device, Ptr<const Packet> p, uint16_t protocol, const Address &from,
+                           const Address &to, NetDevice::PacketType packetType)
+ {
+   NS_LOG_FUNCTION (this << device << p << protocol << from << to << packetType);
+ 
+   NS_LOG_LOGIC ("Packet from " << from << " received on node " << 
+                 m_node->GetId ());
+ 
+ 
+   int32_t interface = GetInterfaceForDevice(device);
+   NS_ASSERT_MSG (interface != -1, "Received a packet from an interface that is not known to IPv4");
+ 
+   Ptr<Packet> packet = p->Copy ();
+ 
+   Ptr<Ipv4Interface> ipv4Interface = m_interfaces[interface];
+ 
+   if (ipv4Interface->IsUp ())
+     {
+       m_rxTrace (packet, m_node->GetObject<Ipv4> (), interface);
+     }
+   else
+     {
+       NS_LOG_LOGIC ("Dropping received packet -- interface is down");
+       Ipv4Header ipHeader;
+       packet->RemoveHeader (ipHeader);
+       m_dropTrace (ipHeader, packet, DROP_INTERFACE_DOWN, m_node->GetObject<Ipv4> (), interface);
+       return;
+     }
+ 
+   Ipv4Header ipHeader;
+   if (Node::ChecksumEnabled ())
+     {
+       ipHeader.EnableChecksum ();
+     }
+   packet->RemoveHeader (ipHeader);
+ 
+   // Trim any residual frame padding from underlying devices
+   if (ipHeader.GetPayloadSize () < packet->GetSize ())
+     {
+       packet->RemoveAtEnd (packet->GetSize () - ipHeader.GetPayloadSize ());
+     }
+ 
+   if (!ipHeader.IsChecksumOk ()) 
+     {
+       NS_LOG_LOGIC ("Dropping received packet -- checksum not ok");
+       m_dropTrace (ipHeader, packet, DROP_BAD_CHECKSUM, m_node->GetObject<Ipv4> (), interface);
+       return;
+     }
+ 
+   // the packet is valid, we update the ARP cache entry (if present)
+   Ptr<ArpCache> arpCache = ipv4Interface->GetArpCache ();
+   if (arpCache)
+     {
+       // case one, it's a a direct routing.
+       ArpCache::Entry *entry = arpCache->Lookup (ipHeader.GetSource ());
+       if (entry)
+         {
+           if (entry->IsAlive ())
+             {
+               entry->UpdateSeen ();
+             }
+         }
+       else
+         {
+           // It's not in the direct routing, so it's the router, and it could have multiple IP addresses.
+           // In doubt, update all of them.
+           // Note: it's a confirmed behavior for Linux routers.
+           std::list<ArpCache::Entry *> entryList = arpCache->LookupInverse (from);
+           std::list<ArpCache::Entry *>::iterator iter;
+           for (iter = entryList.begin (); iter != entryList.end (); iter ++)
+             {
+               if ((*iter)->IsAlive ())
+                 {
+                   (*iter)->UpdateSeen ();
+                 }
+             }
+         }
+     }
+ 
+   for (SocketList::iterator i = m_sockets.begin (); i != m_sockets.end (); ++i)
+     {
+       NS_LOG_LOGIC ("Forwarding to raw socket"); 
+       Ptr<Ipv4RawSocketImpl> socket = *i;
+       socket->ForwardUp (packet, ipHeader, ipv4Interface);
+     }
+ 
+   if (m_enableDpd && ipHeader.GetDestination ().IsMulticast () && UpdateDuplicate (packet, ipHeader))
+     {
+       NS_LOG_LOGIC ("Dropping received packet -- duplicate.");
+       m_dropTrace (ipHeader, packet, DROP_DUPLICATE, m_node->GetObject<Ipv4> (), interface);
+       return;
+     }
+ 
+   NS_ASSERT_MSG (m_routingProtocol != 0, "Need a routing protocol object to process packets");
+   if (!m_routingProtocol->RouteInput (packet, ipHeader, device,
+                                       MakeCallback (&Ipv4L3Protocol::IpForward, this),
+                                       MakeCallback (&Ipv4L3Protocol::IpMulticastForward, this),
+                                       MakeCallback (&Ipv4L3Protocol::LocalDeliver, this),
+                                       MakeCallback (&Ipv4L3Protocol::RouteInputError, this)
+                                       ))
+     {
+       NS_LOG_WARN ("No route found for forwarding packet.  Drop.");
+       m_dropTrace (ipHeader, packet, DROP_NO_ROUTE, m_node->GetObject<Ipv4> (), interface);
+     }
+ }
 
 Ptr<Icmpv4L4Protocol> 
 Ipv4L3Protocol::GetIcmp (void) const

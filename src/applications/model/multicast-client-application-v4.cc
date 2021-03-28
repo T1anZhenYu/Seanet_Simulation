@@ -34,6 +34,7 @@
 #include "ns3/ipv4.h"
 #include "ns3/inet-socket-address.h"
 #include "ns3/ipv4-interface-address.h"
+#define EID_UNIT 7000//最大不能超过10000
 namespace ns3 {
 
 NS_LOG_COMPONENT_DEFINE ("MulticastClientApplicationv4");
@@ -49,7 +50,7 @@ MulticastClientApplicationv4::GetTypeId (void)
     .AddConstructor<MulticastClientApplicationv4> ()
     .AddAttribute ("MaxPackets",
                    "The maximum number of packets the application will send",
-                   UintegerValue (100),
+                   UintegerValue (1),
                    MakeUintegerAccessor (&MulticastClientApplicationv4::m_count),
                    MakeUintegerChecker<uint32_t> ())
     .AddAttribute ("Interval",
@@ -84,6 +85,21 @@ MulticastClientApplicationv4::GetTypeId (void)
                    StringValue ("Read"),
                    MakeStringAccessor (&MulticastClientApplicationv4::function_type),
                    MakeStringChecker ())
+    .AddAttribute ("total_write_switch_num",
+                   "total_write_switch_num",
+                   UintegerValue (1),
+                   MakeUintegerAccessor (&MulticastClientApplicationv4::total_switch_num),
+                   MakeUintegerChecker<uint32_t> ())
+    .AddAttribute ("total_multicast_group_num",
+                   "total_multicast_group_num",
+                   UintegerValue (1),
+                   MakeUintegerAccessor (&MulticastClientApplicationv4::total_multicast_group_num),
+                   MakeUintegerChecker<uint32_t> ())
+    .AddAttribute ("switch_index",
+                   "switch_index",
+                   UintegerValue (0),
+                   MakeUintegerAccessor (&MulticastClientApplicationv4::switch_index),
+                   MakeUintegerChecker<uint32_t>())
               
   ;
   return tid;
@@ -95,6 +111,7 @@ MulticastClientApplicationv4::MulticastClientApplicationv4 ()
   m_sent = 0;
   m_switch_socket = 0;
   function_type = "Read";
+  m_count = 1;
   m_sendEvent = EventId ();
   m_readEvent = EventId ();
 }
@@ -146,6 +163,7 @@ MulticastClientApplicationv4::StartApplication (void)
     }
   Ptr<Node> mynode = GetNode();
   Ptr<Ipv4> ipv4 = m_node->GetObject<Ipv4> ();
+
   for (uint32_t i = 0; i < ipv4->GetNInterfaces (); i++ )
   {
     // Get the primary address
@@ -154,11 +172,18 @@ MulticastClientApplicationv4::StartApplication (void)
     if (addri == Ipv4Address ("127.0.0.1"))
       continue;
     m_local_address = Address(addri);
-    InetSocketAddress mlocal = InetSocketAddress (addri, m_switch_port);
-    NS_LOG_INFO("client local address "<<mlocal.GetIpv4());
+    // InetSocketAddress mlocal = InetSocketAddress (addri, m_switch_port);
+    // NS_LOG_INFO("client local address "<<mlocal.GetIpv4());
     break;
   }
-
+  if(function_type=="Read"){
+    m_count = total_switch_num*EID_UNIT;
+  }else if(function_type == "Write"){
+    m_count = EID_UNIT;
+  }else{
+    m_count = 10;
+  }
+  m_sent = 0;
 
 
   m_switch_socket->SetRecvCallback (MakeCallback (&MulticastClientApplicationv4::ReceiveCallback, this));
@@ -168,13 +193,13 @@ MulticastClientApplicationv4::StartApplication (void)
   if(function_type=="Write"){
     Simulator::Schedule (Seconds (0.0), &MulticastClientApplicationv4::Write, this);
   }else if(function_type=="Read"){
-    Simulator::Schedule (Seconds (1.0), &MulticastClientApplicationv4::Read, this);
+    // NS_LOG_INFO("BEFORE READDD");
+    Simulator::Schedule (Seconds (switch_index*20), &MulticastClientApplicationv4::Read, this);
   }else if(function_type=="All"){
     Simulator::Schedule (Seconds (0.0), &MulticastClientApplicationv4::Write, this);
-    Simulator::Schedule (Seconds (1.0), &MulticastClientApplicationv4::Read, this);
+    // Simulator::Schedule (Seconds (1.0), &MulticastClientApplicationv4::Write, this);
+    Simulator::Schedule (Seconds (switch_index*20), &MulticastClientApplicationv4::Read, this);
   }
-
-  // NeighInfoDetec(m_switch_address,m_switch_port);
 }
 
 void
@@ -193,14 +218,19 @@ MulticastClientApplicationv4::Write (void)
   SeanetHeader ssenh(MULTICAST_APPLICATION,REGIST_TO_SOURCE_DR);
   
   uint8_t buffer[30];
-  memcpy(buffer,"33333333333333333333",21);
-  NS_LOG_INFO("client write to DR");
-  SendPacket(buffer,20,ssenh,m_switch_address,m_switch_port);
-  // if (m_sent < m_count)
-    // {
-      m_sendEvent = Simulator::Schedule (Seconds(2), &MulticastClientApplicationv4::Read, this);
-      // m_sent++;
-    // }
+  memcpy(buffer,"11111111111111111111",20);
+  
+  if (m_sent < m_count){
+      m_sent++;
+      buffer[18]+=m_sent%100;
+      buffer[17]+=(uint8_t)(m_sent/100);
+      buffer[16]+=switch_index;
+      NS_LOG_INFO("client Write "<<(uint32_t)m_sent<<" total "<<(uint32_t)m_count<<" EID "
+                      <<(uint32_t)(buffer[16]-'0')<<" "<<(uint32_t)(buffer[17]-'0')<<" "
+                      <<(uint32_t)(buffer[18]-'0')<<" "<<(uint32_t)(buffer[19]-'0'));
+      SendPacket(buffer,20,ssenh,m_switch_address,m_switch_port);
+      Simulator::Schedule (Seconds(0.01), &MulticastClientApplicationv4::Write, this);
+  }
 }
 
 void
@@ -209,15 +239,22 @@ MulticastClientApplicationv4::Read (void)
   NS_LOG_FUNCTION (this);
   NS_ASSERT (m_readEvent.IsExpired ());
   SeanetHeader ssenh(MULTICAST_APPLICATION ,REGIST_TO_DEST_DR);
-  
   uint8_t buffer[30];
-  memcpy(buffer,"33333333333333333333",21);
-  NS_LOG_INFO("client send multicast request");
-  SendPacket(buffer,20,ssenh,m_switch_address,m_switch_port);
-  // if (m_sent < m_count)
-  //   {
-      // m_readEvent = Simulator::Schedule (m_interval, &MulticastClientApplicationv4::Write, this);
-    // }
+  memcpy(buffer,"11111111111111111111",20);
+  if (m_sent < m_count){
+      m_sent++;
+      buffer[18]+= m_sent%100;
+      buffer[17]+= (uint8_t)(m_sent/100)%(EID_UNIT/100);
+      buffer[16]+= (uint8_t)(m_sent/EID_UNIT + switch_index)%total_switch_num;
+      if(buffer[16]-'0'==2&&buffer[17]-'0'==2&&buffer[18]-'0'==2){
+      NS_LOG_INFO("client Read "<<(uint32_t)m_sent<<" total "<<(uint32_t)m_count<<" EID "
+                      <<(uint32_t)(buffer[16]-'0')<<" "<<(uint32_t)(buffer[17]-'0')<<" "
+                      <<(uint32_t)(buffer[18]-'0')<<" "<<(uint32_t)(buffer[19]-'0'));
+      }
+
+      SendPacket(buffer,20,ssenh,m_switch_address,m_switch_port);
+      Simulator::Schedule (Seconds(0.01), &MulticastClientApplicationv4::Read, this);
+  }
 }
 void MulticastClientApplicationv4::ReceiveCallback (Ptr<Socket> socket){
   NS_LOG_FUNCTION (this << socket);

@@ -131,10 +131,10 @@ ResolutionApplicationv4::StartApplication (void)
 
   m_socket->SetRecvCallback (MakeCallback (&ResolutionApplicationv4::FrontEnd, this));
 
-  packetin = CreateObject<DropTailQueue<Packet>> ();
-  addressin = CreateObject<DropTailQueue<SeanetAddress>> ();
+  // packetin = CreateObject<DropTailQueue<Packet>> ();
+  // addressin = CreateObject<DropTailQueue<SeanetAddress>> ();
 
-  AferEnd (localAddress);
+  // AferEnd (localAddress);
 }
 
 void
@@ -200,16 +200,26 @@ ResolutionApplicationv4::FrontEnd (Ptr<Socket> socket)
     {
       if (packet->GetSize () > 0)
         {
-          Ptr<SeanetAddress> sa = CreateObject<SeanetAddress>();
-          // SeanetAddress *sa_ = new SeanetAddress();
-          packetin->Enqueue (packet);
-          sa->fromAddress(from);
-          
-          uint8_t buffer[100];
-          from.CopyAllTo(buffer,100);
-          bool flag = addressin->Enqueue(sa);
-          if(flag == false){
-              NS_LOG_INFO("Resolution EnqueueFailed "<<flag);
+          SeanetHeader ssenh;
+          packet->RemoveHeader (ssenh);
+          // sa->toAddress(from);
+          uint32_t application_type = ssenh.GetApplicationType();
+          uint32_t protocol_type = ssenh.GetProtocolType();
+          uint8_t buffer[MAX_PAYLOAD_LEN];
+          int buffer_len = packet->CopyData(buffer,MAX_PAYLOAD_LEN);
+          switch (application_type){
+            case RESOLUTION_APPLICATION:{
+              ResolutionProtocolHandle(buffer,buffer_len,protocol_type,from);
+              // NS_LOG_INFO("Resolution receive a packet");
+              break;
+            }
+            case SWITCH_APPLICATION:{
+              NS_LOG_INFO("Resolution can't process this application type");
+              // SwitchApplication::SwitchProtocolHandle(buffer,buffer_len,protocol_type,from);
+              break;
+            }
+            default:
+            break;
           }
           
         }
@@ -268,11 +278,12 @@ void ResolutionApplicationv4::RequestHandle(uint8_t* buffer, uint8_t buffer_len,
   ResolutionApplicationv4::LISTIP * value = ResolutionApplicationv4::LookupEIDNATable(se);
   
   if(value!=NULL){
-    // NS_LOG_INFO("Resolution info request");
+    
     uint8_t res[MAX_PAYLOAD_LEN];
     se.getSeanetEID(res);
     int ipnum = 0;
     for (ResolutionApplicationv4::LISTIP::iterator it = value->begin(); it != value->end(); ++it) {
+
       uint8_t* buf = *it;
       std::list<uint8_t*>::iterator itnext = it;
       itnext++;
@@ -283,21 +294,25 @@ void ResolutionApplicationv4::RequestHandle(uint8_t* buffer, uint8_t buffer_len,
         res[EIDSIZE+1] = 10;
         SeanetHeader ssenh(RESOLUTION_APPLICATION,REPLY_EID_NA);
         ResolutionApplicationv4::SendPacket(res,MAX_PAYLOAD_LEN,ssenh,from); 
+        NS_LOG_INFO("1:Resolution reply request "<<ipnum<<" "<<buffer[15]<<buffer[16]<<buffer[17]<<buffer[18]
+      <<buffer[19]);
         memset(res+EIDSIZE,0,MAX_PAYLOAD_LEN-EIDSIZE);    
       }else if(ipnum%10==0 && itnext==value->end()){
         res[EIDSIZE]=PACKET_FINISH;//
         res[EIDSIZE+1] = 10;
         SeanetHeader ssenh(RESOLUTION_APPLICATION,REPLY_EID_NA);
         ResolutionApplicationv4::SendPacket(res,MAX_PAYLOAD_LEN,ssenh,from);  
+        NS_LOG_INFO("2:Resolution reply request "<<ipnum<<" "<<buffer[15]<<buffer[16]<<buffer[17]<<buffer[18]
+      <<buffer[19]);
         memset(res+EIDSIZE,0,MAX_PAYLOAD_LEN-EIDSIZE);    
       }
-      
-        // std::cout << *it << " ";
     }
     if(ipnum%10!=0){
       res[EIDSIZE]=PACKET_FINISH;//
       res[EIDSIZE+1] = ipnum%10;
       // memcpy(res+EIDSIZE,value,EID_NA_TABLE_VALUE_SIZE);
+      NS_LOG_INFO("3:Resolution reply request "<<ipnum<<" "<<buffer[15]<<buffer[16]<<buffer[17]<<buffer[18]
+      <<buffer[19]);
       SeanetHeader ssenh(RESOLUTION_APPLICATION,REPLY_EID_NA);
       ResolutionApplicationv4::SendPacket(res,MAX_PAYLOAD_LEN,ssenh,from);
     }

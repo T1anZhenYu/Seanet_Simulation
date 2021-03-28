@@ -112,7 +112,7 @@ private:
   uint16_t m_switch_port,m_resolution_port; //!< Remote peer port
   EventId m_sendEvent, m_readEvent; //!< Event to send the next packet
   NeighDelayTable m_neigh_delay_table;
-
+  uint32_t total_switch_num,switch_index,total_multicast_group_num;
 };
 
 } // namespace ns3

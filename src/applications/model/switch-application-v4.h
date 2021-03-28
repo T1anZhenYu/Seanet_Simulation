@@ -79,8 +79,10 @@ public:
    * \return the size of the window used for checking loss.
    */
   uint16_t GetPacketWindowSize () const;
-  void SetNeighInfoTable(sgi::hash_map<Ipv4Address, float, Ipv4AddressHash>* sct,
-  sgi::hash_map<Ipv4Address, float, Ipv4AddressHash>* mct);
+  void SetNeighInfoTable(sgi::hash_map<Ipv4Address, std::list<uint8_t*>*, Ipv4AddressHash>* sct,
+  sgi::hash_map<Ipv4Address, std::list<uint8_t*>*, Ipv4AddressHash>* mct,
+  sgi::hash_map<SeanetEID, std::list<Ipv4Address*>*, SeanetEIDHash>*ent);
+  bool CheckDuplicate(std::list<uint8_t*>*head, uint8_t* buf);
   /**
    * \brief Set the size of the window used for checking loss. This value should
    *  be a multiple of 8
@@ -91,7 +93,10 @@ public:
 
   uint8_t LookupEIDTable(SeanetEID se);
   uint8_t AddEIDTable(SeanetEID se, uint8_t value);
-
+  void AddEIDNAINFO(SeanetEID se,Ipv4Address i4a);
+  Ipv4Address FindNearestNode(SeanetEID se);
+  Ipv4Address LookupEIDNAINFO(SeanetEID se);
+  void SetEntrySwitch(bool isEntry);
   void RandomCache(uint16_t size);
   void NeigthInfoProtocolHandle(uint8_t* buffer, uint8_t buffer_len, 
         uint8_t protocoal_type, Address from,SeqTsSizeHeader stsh);
@@ -115,8 +120,10 @@ private:
   void NeighInfoDetec(Address dst_ip,uint16_t dst_port);
   int IsDestination(Address address);
   void ResolutionProtocolHandle(uint8_t* buffer, uint8_t buffer_len, uint8_t protocoal_type, Address from);
+  float GetSwitchSocre(Ipv4Address ad);
+  void NeighInfoReply(Address dst_ip,uint16_t dst_port);
   //Send packet 
-
+  void AddCastTable( sgi::hash_map<Ipv4Address, std::list<uint8_t *>*, Ipv4AddressHash> *table,Ipv4Address i4a,uint8_t* buf);
   /**
    * \brief Handle frontend issue.
    *
@@ -136,7 +143,7 @@ private:
   void AferEnd ();
   
   typedef sgi::hash_map<SeanetEID, uint8_t, SeanetEIDHash> EID_table; //the eid this switch stores.
-  typedef sgi::hash_map<SeanetEID, Ipv4Address, SeanetEIDHash> EID_NA_table; //the nearest switch which stores the eid
+
   Ptr<Queue<Packet> > packetin;//connet frontend and afterend.
   Ptr<Queue<SeanetAddress>> addressin;
   uint16_t m_port; //!< Port on which we listen for incoming packets.
@@ -144,18 +151,20 @@ private:
   uint64_t m_received; //!< Number of received packets
   uint16_t m_cache_size; // total cache size;
   uint16_t m_temp_cache_size;
-  PacketLossCounter m_lossCounter; //!< Lost packet counter
+  bool is_entry_switch;// is entry
+  PacketLossCounter m_loss_counter; //!< Lost packet counter
   EventId m_AfterEndEvent,m_RandomCacheEvent;
   EID_table m_eid_table;
-  EID_NA_table m_eid_na_table;
-  sgi::hash_map<Ipv4Address, Time, Ipv4AddressHash> DelayTable;
-  Address resolution_addr,localAddress;
-  sgi::hash_map<Ipv4Address, float, Ipv4AddressHash> *UnicastTable, *MultiCastTable;
+  std::string tree_type;
+  sgi::hash_map<Ipv4Address, Time, Ipv4AddressHash> delay_table;
+  Address resolution_addr,local_address;
+  sgi::hash_map<Ipv4Address, std::list<uint8_t *>*, Ipv4AddressHash> *unicast_table, *multicast_table;
+  sgi::hash_map<SeanetEID, std::list<Ipv4Address*>*, SeanetEIDHash> *resolution_table;
   /// Callbacks for tracing the packet Rx events
-  TracedCallback<Ptr<const Packet> > m_rxTrace;
-
+  TracedCallback<Ptr<const Packet> > rm_rx_trace;
+  bool have_detected;
   /// Callbacks for tracing the packet Rx events, includes source and destination addresses
-  TracedCallback<Ptr<const Packet>, const Address &, const Address &> m_rxTraceWithAddresses;
+  TracedCallback<Ptr<const Packet>, const Address &, const Address &> m_rx_trace_with_addresses;
 
 };
 

@@ -72,7 +72,12 @@ uint8_t SeanetHeader_::Getdst(void) const
   NS_LOG_FUNCTION (this);
   return is_dst;
 }
-
+void SeanetHeader_::SetInterface(uint8_t num){
+  interface_num = num;
+}
+uint8_t SeanetHeader_::GetInterface(){
+  return interface_num;
+}
 void
 SeanetHeader_::SetProtocolType (uint8_t pt)
 {
@@ -107,13 +112,13 @@ SeanetHeader_::Print (std::ostream &os) const
   NS_LOG_FUNCTION (this << &os);
   os << "(application_type=" << application_type
    << " protocol_type=" << protocol_type 
-   << " is_dst= "<<is_dst<< ")";
+   << " is_dst= "<<is_dst<<" intefacenum "<< interface_num<< ")";
 }
 uint32_t
 SeanetHeader_::GetSerializedSize (void) const
 {
   NS_LOG_FUNCTION (this);
-  return 3;
+  return 4;
 }
 
 void
@@ -124,6 +129,7 @@ SeanetHeader_::Serialize (Buffer::Iterator start) const
   i.WriteU8 (application_type, 1);
   i.WriteU8 (protocol_type, 1);
   i.WriteU8 (is_dst, 1);
+  i.WriteU8(interface_num,1);
 }
 uint32_t
 SeanetHeader_::Deserialize (Buffer::Iterator start)
@@ -133,6 +139,7 @@ SeanetHeader_::Deserialize (Buffer::Iterator start)
   application_type = i.ReadU8();
   protocol_type = i.ReadU8 ();
   is_dst = i.ReadU8 ();
+  interface_num = i.ReadU8();
   return GetSerializedSize ();
 }
 

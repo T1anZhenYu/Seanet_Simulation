@@ -3,6 +3,7 @@
 
 #include <stdint.h>
 #include <functional>
+#include <string.h>
 #define EIDSIZE 20
 namespace ns3 {
     class SeanetEID{

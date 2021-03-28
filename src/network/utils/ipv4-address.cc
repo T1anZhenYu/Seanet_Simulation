@@ -198,23 +198,31 @@ Ipv4Mask::GetPrefixLength (void) const
 }
 
 static constexpr uint32_t UNINITIALIZED = 0x66666666U;
-
+void Ipv4Address::SetInterfaceNum(uint32_t num){
+  m_interface = num;
+}
+uint32_t Ipv4Address::GetInterfaceNum() const {
+  return m_interface;
+}
 Ipv4Address::Ipv4Address ()
   : m_address (UNINITIALIZED), m_initialized (false)
 {
   NS_LOG_FUNCTION (this);
+  m_interface = 0;
 }
 Ipv4Address::Ipv4Address (uint32_t address)
 {
   NS_LOG_FUNCTION (this << address);
   m_address = address;
   m_initialized = true;
+  m_interface = 0;
 }
 Ipv4Address::Ipv4Address (char const *address)
 {
   NS_LOG_FUNCTION (this << address);
   m_address = AsciiToIpv4Host (address);
   m_initialized = true;
+  m_interface = 0;
 }
 
 uint32_t
@@ -419,10 +427,10 @@ Ipv4Address::GetLoopback (void)
   Ipv4Address loopback ("127.0.0.1");
   return loopback;
 }
-
 size_t Ipv4AddressHash::operator() (Ipv4Address const &x) const
 { 
-  return x.Get ();
+  NS_LOG_INFO("HASH "<<x.GetInterfaceNum());
+  return x.Get () + x.GetInterfaceNum();
 }
 
 std::ostream& operator<< (std::ostream& os, Ipv4Address const& address)

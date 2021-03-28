@@ -80,8 +80,9 @@ public:
    */
   ApplicationContainer Install (NodeContainer c);
 
-  ApplicationContainer Install (NodeContainer c,sgi::hash_map<Ipv4Address, float, Ipv4AddressHash>* sct,
-  sgi::hash_map<Ipv4Address, float, Ipv4AddressHash>* mct);
+  ApplicationContainer Install (NodeContainer c,sgi::hash_map<Ipv4Address, std::list<uint8_t *>*, Ipv4AddressHash>* sct,
+  sgi::hash_map<Ipv4Address, std::list<uint8_t *>*, Ipv4AddressHash>* mct, 
+  sgi::hash_map<SeanetEID, std::list<Ipv4Address*>*, SeanetEIDHash>*ent,bool isEntry);
 
   /**
    * \brief Return the last created server.

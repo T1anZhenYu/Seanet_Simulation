@@ -102,11 +102,11 @@ void SeanetEID::setSeanetEID(uint8_t* const eid){
     memcpy(eidbuf,eid,EIDSIZE);
 }
 void SeanetEID::Print(){
-    NS_LOG_INFO("EID: "<<eidbuf[0]<<eidbuf[1]<<eidbuf[2]<<eidbuf[3]<<" "
-    <<eidbuf[4]<<eidbuf[5]<<eidbuf[6]<<eidbuf[7]<<" "
-    <<eidbuf[8]<<eidbuf[9]<<eidbuf[10]<<eidbuf[11]<<" "
-    <<eidbuf[12]<<eidbuf[13]<<eidbuf[14]<<eidbuf[15]<<" "
-    <<eidbuf[16]<<eidbuf[17]<<eidbuf[18]<<eidbuf[19]);
+    NS_LOG_INFO("EID: "<<(uint32_t)(eidbuf[0]-'0')<<" "<<(uint32_t)(eidbuf[1]-'0')<<" "<<(uint32_t)(eidbuf[2]-'0')<<" "<<(uint32_t)(eidbuf[3]-'0')<<" |"
+   <<(uint32_t)(eidbuf[4]-'0')<<" "<<(uint32_t)(eidbuf[5]-'0')<<" "<<(uint32_t)(eidbuf[6]-'0')<<" "<<(uint32_t)(eidbuf[7]-'0')<<" |"
+    <<(uint32_t)(eidbuf[8]-'0')<<" "<<(uint32_t)(eidbuf[9]-'0')<<" "<<(uint32_t)(eidbuf[10]-'0')<<" "<<(uint32_t)(eidbuf[11]-'0')<<" |"
+    <<(uint32_t)(eidbuf[12]-'0')<<" "<<(uint32_t)(eidbuf[13]-'0')<<" "<<(uint32_t)(eidbuf[14]-'0')<<" "<<(uint32_t)(eidbuf[15]-'0')<<" |"
+    <<(uint32_t)(eidbuf[16]-'0')<<" "<<(uint32_t)(eidbuf[17]-'0')<<" "<<(uint32_t)(eidbuf[18]-'0')<<" "<<(uint32_t)(eidbuf[19]-'0'));
 }
 SeanetEID::~SeanetEID ()
 {

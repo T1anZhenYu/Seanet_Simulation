@@ -84,6 +84,8 @@ public:
    * \param other address to which to compare this address
    * \return True if the addresses are equal. False otherwise.
    */
+  void SetInterfaceNum(uint32_t num);
+  uint32_t GetInterfaceNum()const;
   NS_DEPRECATED_3_31
   bool IsEqual (const Ipv4Address &other) const
   {
@@ -225,6 +227,7 @@ private:
    */
   static uint8_t GetType (void);
   uint32_t m_address; //!< IPv4 address
+  uint32_t m_interface;//interface number
   bool m_initialized; //!< IPv4 address has been explicitly initialized to a valid value.
 
   /**
